@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Request Access | Pinnacle Realty Portal</title>
+  <link rel="stylesheet" href="../styles.css" />
+</head>
+
+<body data-page="request-access">
+  <div class="portal-bg">
+    <div class="glow glow-one"></div>
+    <div class="glow glow-two"></div>
+    <div class="glow glow-three"></div>
+  </div>
+
+  <main class="login-screen active">
+    <section class="login-card single-card">
+      <div class="brand-area">
+        <img src="../assets/images/pinnacle-logo.png" alt="Pinnacle Realty Logo" class="brand-logo" />
+        <p class="brand-kicker">Agent Access Request</p>
+        <h1>Request access to the Pinnacle portal.</h1>
+        <p class="brand-subtext">
+          New agents can submit their information here. The Broker of Record must approve the account before access is granted.
+        </p>
+      </div>
+
+      <form class="login-form" id="requestAccessForm">
+        <label for="requestName">Full Name</label>
+        <input type="text" id="requestName" placeholder="Your full name" required />
+
+        <label for="requestEmail">Email Address</label>
+        <input type="email" id="requestEmail" placeholder="your@email.com" required />
+
+        <label for="requestPhone">Phone Number</label>
+        <input type="tel" id="requestPhone" placeholder="905-000-0000" required />
+
+        <label for="requestPassword">Choose Password</label>
+        <input type="password" id="requestPassword" placeholder="Minimum 8 characters" required minlength="8" />
+
+        <button type="submit" class="primary-btn">Submit Request</button>
+
+        <div class="login-actions">
+          <a href="../index.html">Back to login</a>
+        </div>
+
+        <p class="login-note" id="requestMessage"></p>
+      </form>
+    </section>
+  </main>
+
+  <script src="../script.js"></script>
+</body>
+</html>

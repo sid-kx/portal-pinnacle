@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Pinnacle Realty Portal</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+  <div class="portal-bg">
+    <div class="glow glow-one"></div>
+    <div class="glow glow-two"></div>
+    <div class="glow glow-three"></div>
+  </div>
+
+  <main class="login-screen active">
+    <section class="login-card">
+      <div class="brand-area">
+        <img src="assets/images/pinnacle-logo.png" alt="Pinnacle Realty Logo" class="brand-logo" />
+        <p class="brand-kicker">Agent & Broker Portal</p>
+        <h1>Welcome to the private Pinnacle dashboard.</h1>
+        <p class="brand-subtext">
+          Manage agent profiles, approvals, and brokerage-controlled content in one secure portal.
+        </p>
+      </div>
+
+      <form class="login-form" id="loginForm">
+        <label for="email">Email Address</label>
+        <input type="email" id="email" placeholder="agent@pinnaclerealty.ca" required />
+
+        <label for="password">Password</label>
+        <input type="password" id="password" placeholder="Enter password" required minlength="8" />
+
+        <button type="submit" class="primary-btn">Sign In</button>
+
+        <div class="login-actions">
+          <button type="button" class="text-btn" id="forgotPasswordBtn">Forgot password?</button>
+          <a href="pages/request-access.html">Request access</a>
+        </div>
+
+        <p class="login-note" id="loginMessage"></p>
+      </form>
+    </section>
+  </main>
+
+  <div class="modal-backdrop" id="passwordModal">
+    <div class="modal-card">
+      <button class="modal-close" id="closePasswordModal">×</button>
+      <p class="eyebrow">Password Help</p>
+      <h2>Forgot your password?</h2>
+      <p>
+        Please ask your Broker of Record, Jag Saini, for your password if it has been forgotten.
+      </p>
+      <button class="primary-btn" id="modalOkayBtn">Okay</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

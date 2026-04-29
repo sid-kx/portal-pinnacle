@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Broker Dashboard | Pinnacle Realty Portal</title>
+  <link rel="stylesheet" href="../styles.css" />
+</head>
+
+<body data-protected="broker">
+  <div class="portal-bg">
+    <div class="glow glow-one"></div>
+    <div class="glow glow-two"></div>
+    <div class="glow glow-three"></div>
+  </div>
+
+  <section class="portal-app active">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <img src="../assets/images/pinnacle-logo.png" alt="Pinnacle Realty Logo" />
+      </div>
+
+      <nav class="sidebar-nav active">
+        <a class="nav-link active" href="broker-dashboard.html">Dashboard</a>
+        <a class="nav-link" href="agent-approvals.html">Agent Approvals</a>
+        <a class="nav-link" href="agents.html">Agents</a>
+        <a class="nav-link" href="new-construction.html">New Construction</a>
+        <a class="nav-link" href="settings.html">Settings</a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="logout-btn" data-logout>Logout</button>
+      </div>
+    </aside>
+
+    <div class="main-shell">
+      <header class="topbar">
+        <button class="mobile-menu-btn" id="mobileMenuBtn">☰</button>
+
+        <div>
+          <p class="page-label">Broker Portal</p>
+          <h2>Broker Dashboard</h2>
+        </div>
+
+        <div class="profile-pill">
+          <div class="profile-avatar">J</div>
+          <div>
+            <strong>Jagdeep Saini</strong>
+            <span>Broker of Record</span>
+          </div>
+        </div>
+      </header>
+
+      <main class="content-area">
+        <section class="hero-panel">
+          <div>
+            <p class="eyebrow">Broker Dashboard</p>
+            <h1>Control approvals and brokerage content.</h1>
+            <p>
+              Review pending agent accounts, manage approved profiles, and control new construction content from one secure dashboard.
+            </p>
+          </div>
+
+          <a class="primary-btn" href="agent-approvals.html">Review Approvals</a>
+        </section>
+
+        <div class="stats-grid broker-stats">
+          <article class="stat-card">
+            <span>Pending Agents</span>
+            <strong>0</strong>
+            <p>No pending approval requests right now.</p>
+          </article>
+
+          <article class="stat-card">
+            <span>Active Agents</span>
+            <strong>2</strong>
+            <p>Broker and marketing accounts are currently set.</p>
+          </article>
+
+          <article class="stat-card">
+            <span>Projects</span>
+            <strong>0</strong>
+            <p>New construction entries will be added by the broker.</p>
+          </article>
+        </div>
+
+        <section class="table-card">
+          <div class="table-heading">
+            <h3>Portal Status</h3>
+            <span>Ready for backend plug-in</span>
+          </div>
+
+          <div class="activity-list">
+            <div>
+              <strong>Supabase Auth</strong>
+              <p>Ready to replace frontend login with secure authentication.</p>
+            </div>
+
+            <div>
+              <strong>Agent Profiles</strong>
+              <p>Ready to connect profile forms to the Supabase database and Storage.</p>
+            </div>
+
+            <div>
+              <strong>Broker Controls</strong>
+              <p>Ready for approval, profile management, and new construction tools.</p>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </section>
+
+  <script src="../script.js"></script>
+</body>
+</html>

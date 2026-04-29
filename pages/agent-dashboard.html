@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Agent Dashboard | Pinnacle Realty Portal</title>
+  <link rel="stylesheet" href="../styles.css" />
+</head>
+
+<body data-protected="agent">
+  <div class="portal-bg">
+    <div class="glow glow-one"></div>
+    <div class="glow glow-two"></div>
+    <div class="glow glow-three"></div>
+  </div>
+
+  <section class="portal-app active">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <img src="../assets/images/pinnacle-logo.png" alt="Pinnacle Realty Logo" />
+      </div>
+
+      <nav class="sidebar-nav active">
+        <a class="nav-link active" href="agent-dashboard.html">Dashboard</a>
+        <a class="nav-link" href="edit-profile.html">Edit Profile</a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="logout-btn" data-logout>Logout</button>
+      </div>
+    </aside>
+
+    <div class="main-shell">
+      <header class="topbar">
+        <button class="mobile-menu-btn" id="mobileMenuBtn">☰</button>
+
+        <div>
+          <p class="page-label">Agent Portal</p>
+          <h2>Dashboard</h2>
+        </div>
+
+        <div class="profile-pill">
+          <div class="profile-avatar">S</div>
+          <div>
+            <strong>Sid Kamboj</strong>
+            <span>Agent Account</span>
+          </div>
+        </div>
+      </header>
+
+      <main class="content-area">
+        <section class="hero-panel">
+          <div>
+            <p class="eyebrow">Agent Dashboard</p>
+            <h1>Keep your public profile accurate and polished.</h1>
+            <p>
+              Update your biography, contact information, social links, and profile image. Once saved, your information will be ready to appear on the public Pinnacle Realty agents page.
+            </p>
+          </div>
+
+          <a class="primary-btn" href="edit-profile.html">Edit My Profile</a>
+        </section>
+
+        <div class="stats-grid">
+          <article class="stat-card">
+            <span>Profile Status</span>
+            <strong>Active</strong>
+            <p>Your profile is ready to be shown publicly once connected to Supabase.</p>
+          </article>
+
+          <article class="stat-card">
+            <span>Account Type</span>
+            <strong>Agent</strong>
+            <p>This account can edit only its own public profile information.</p>
+          </article>
+
+          <article class="stat-card">
+            <span>Website Sync</span>
+            <strong>Ready</strong>
+            <p>The main website will read approved profile data from Supabase.</p>
+          </article>
+        </div>
+
+        <section class="preview-card">
+          <div class="agent-preview">
+            <div class="agent-photo-preview">SK</div>
+            <div>
+              <p class="eyebrow">Profile Preview</p>
+              <h3>Sid Kamboj</h3>
+              <p>
+                This preview will later display the agent’s saved Supabase profile information.
+              </p>
+
+              <div class="social-row">
+                <img src="../assets/icons/instagram-logo.jpg" alt="Instagram" />
+                <img src="../assets/icons/facebook-logo.jpg" alt="Facebook" />
+                <img src="../assets/icons/linkedin-logo.jpg" alt="LinkedIn" />
+                <img src="../assets/icons/twitter-logo.jpg" alt="X" />
+                <img src="../assets/icons/youtube-logo.jpg" alt="YouTube" />
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </section>
+
+  <script src="../script.js"></script>
+</body>
+</html>
