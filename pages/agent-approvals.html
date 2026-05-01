@@ -59,7 +59,7 @@
         <section class="section-heading">
           <p class="eyebrow">Broker Control</p>
           <h1>Agent approvals</h1>
-          <p>New agent account requests will appear here after Supabase is connected.</p>
+          <p>Review pending portal access requests. Approved agents will be able to sign in, edit their public profile, and appear on the main Pinnacle Realty website.</p>
         </section>
 
         <section class="table-card">
@@ -70,15 +70,35 @@
                   <th>Name</th>
                   <th>Email</th>
                   <th>Phone</th>
+                  <th>License</th>
                   <th>Date</th>
                   <th>Status</th>
                   <th>Action</th>
                 </tr>
               </thead>
 
-              <tbody>
-                <tr>
-                  <td colspan="6" class="empty-state-cell">
+              <tbody id="agentApprovalsTableBody">
+                <tr data-request-id="sample-pending-agent">
+                  <td>Sample Agent</td>
+                  <td>sample.agent@email.com</td>
+                  <td>905-000-0000</td>
+                  <td>Pending</td>
+                  <td>Backend Ready</td>
+                  <td><span class="status pending">Pending</span></td>
+                  <td>
+                    <div class="table-actions">
+                      <button class="small-btn approve" type="button" data-approve-agent="sample-pending-agent">
+                        Approve
+                      </button>
+                      <button class="small-btn reject" type="button" data-reject-agent="sample-pending-agent">
+                        Reject
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+
+                <tr id="agentApprovalsEmptyState" hidden>
+                  <td colspan="7" class="empty-state-cell">
                     No pending agent approval requests right now.
                   </td>
                 </tr>

@@ -65,58 +65,66 @@
             <div>
               <h3>Profile Image</h3>
               <p>Upload a professional headshot. This will later connect to Supabase Storage.</p>
-              <input type="file" accept="image/*" />
+              <input type="file" id="profileImage" name="profile_image" accept="image/*" />
             </div>
           </div>
 
           <div class="form-grid">
             <label>
               Full Name
-              <input type="text" id="profileName" placeholder="Full name" required />
+              <input type="text" id="profileName" name="full_name" placeholder="Full name" required />
             </label>
 
             <label>
               Email
-              <input type="email" id="profileEmail" placeholder="email@pinnaclerealty.ca" required />
+              <input type="email" id="profileEmail" name="email" placeholder="email@pinnaclerealty.ca" required />
             </label>
 
             <label>
               Direct Phone
-              <input type="tel" id="profilePhone" placeholder="905-000-0000" />
+              <input type="tel" id="profilePhone" name="direct_phone" placeholder="905-000-0000" />
+            </label>
+
+            <label>
+              Office Phone
+              <input type="tel" id="profileOfficePhone" name="office_phone" placeholder="905-609-7653" />
             </label>
           </div>
 
           <label class="full-field">
             Biography
-            <textarea id="profileBio" rows="8" placeholder="Write your professional biography..."></textarea>
+            <textarea id="profileBio" name="bio" rows="8" placeholder="Write your professional biography..."></textarea>
           </label>
 
           <div class="form-grid">
             <label>
               Instagram URL
-              <input type="url" placeholder="https://instagram.com/..." />
+              <input type="url" id="profileInstagram" name="instagram_url" placeholder="https://instagram.com/..." />
             </label>
 
             <label>
               Facebook URL
-              <input type="url" placeholder="https://facebook.com/..." />
+              <input type="url" id="profileFacebook" name="facebook_url" placeholder="https://facebook.com/..." />
             </label>
 
             <label>
               LinkedIn URL
-              <input type="url" placeholder="https://linkedin.com/in/..." />
+              <input type="url" id="profileLinkedin" name="linkedin_url" placeholder="https://linkedin.com/in/..." />
             </label>
 
             <label>
               X / Twitter URL
-              <input type="url" placeholder="https://x.com/..." />
+              <input type="url" id="profileTwitter" name="twitter_url" placeholder="https://x.com/..." />
             </label>
 
             <label>
               YouTube URL
-              <input type="url" placeholder="https://youtube.com/..." />
+              <input type="url" id="profileYoutube" name="youtube_url" placeholder="https://youtube.com/..." />
             </label>
           </div>
+
+          <input type="hidden" id="profileStatus" name="profile_status" value="active" />
+          <input type="hidden" id="profilePublicStatus" name="is_public" value="true" />
 
           <div class="form-actions">
             <a href="agent-dashboard.html" class="ghost-btn">Cancel</a>

@@ -60,10 +60,75 @@
           <div>
             <p class="eyebrow">Broker Managed</p>
             <h1>New construction</h1>
-            <p>Manually manage new construction projects that may not come directly from MLS.</p>
+            <p>Manually manage new construction projects that may not come directly from MLS. Published projects will appear on the main Pinnacle Realty website.</p>
           </div>
 
-          <button class="primary-btn">+ Add Project</button>
+          <button class="primary-btn" type="button" id="addProjectBtn">+ Add Project</button>
+        </section>
+
+        <section class="form-card project-form-card" id="projectFormCard" hidden>
+          <div class="table-heading">
+            <div>
+              <p class="eyebrow">Project Details</p>
+              <h3>Add new construction project</h3>
+            </div>
+            <button class="small-btn" type="button" id="cancelProjectBtn">Cancel</button>
+          </div>
+
+          <form class="profile-form" id="newConstructionForm">
+            <div class="form-grid">
+              <label>
+                Project Name
+                <input type="text" id="projectName" name="project_name" placeholder="Project name" required />
+              </label>
+
+              <label>
+                Location
+                <input type="text" id="projectLocation" name="location" placeholder="City or address" required />
+              </label>
+
+              <label>
+                Starting Price
+                <input type="text" id="projectStartingPrice" name="starting_price" placeholder="From $999,000" />
+              </label>
+
+              <label>
+                Status
+                <select id="projectStatus" name="status">
+                  <option value="Coming Soon">Coming Soon</option>
+                  <option value="Selling Now">Selling Now</option>
+                  <option value="Sold Out">Sold Out</option>
+                </select>
+              </label>
+            </div>
+
+            <label class="full-field">
+              Project Description
+              <textarea id="projectDescription" name="description" rows="5" placeholder="Write a short public description for this project..."></textarea>
+            </label>
+
+            <div class="form-grid">
+              <label>
+                Project Image
+                <input type="file" id="projectImage" name="project_image" accept="image/*" />
+              </label>
+
+              <label>
+                Public Visibility
+                <select id="projectPublicStatus" name="is_public">
+                  <option value="true">Show on website</option>
+                  <option value="false">Hide from website</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="form-actions">
+              <button class="ghost-btn" type="button" id="resetProjectBtn">Reset</button>
+              <button class="primary-btn" type="submit">Save Project</button>
+            </div>
+
+            <p class="form-message" id="projectMessage"></p>
+          </form>
         </section>
 
         <section class="table-card">
@@ -79,8 +144,25 @@
                 </tr>
               </thead>
 
-              <tbody>
-                <tr>
+              <tbody id="newConstructionTableBody">
+                <tr data-project-id="sample-project">
+                  <td>Sample Project</td>
+                  <td>Mississauga, ON</td>
+                  <td>From $999,000</td>
+                  <td><span class="status pending">Coming Soon</span></td>
+                  <td>
+                    <div class="table-actions">
+                      <button class="small-btn" type="button" data-edit-project="sample-project">
+                        Edit
+                      </button>
+                      <button class="small-btn reject" type="button" data-delete-project="sample-project">
+                        Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+
+                <tr id="newConstructionEmptyState" hidden>
                   <td colspan="5" class="empty-state-cell">
                     No new construction projects added yet.
                   </td>

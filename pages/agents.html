@@ -59,11 +59,11 @@
         <section class="section-heading">
           <p class="eyebrow">Public Profiles</p>
           <h1>Manage agents</h1>
-          <p>Approved agents listed here will be available for the main website to display. For the backend version, passwords should be reset by the broker instead of permanently exposed.</p>
+          <p>Approved agents listed here will be available for the main website to display. The Broker of Record can deactivate an agent to disable portal access and remove their public profile.</p>
         </section>
 
-        <div class="cards-grid">
-          <article class="mini-agent-card">
+        <div class="cards-grid" id="agentsGrid">
+          <article class="mini-agent-card" data-agent-id="jag-admin" data-agent-role="broker" data-public-profile="true">
             <div class="mini-avatar">JS</div>
             <h3>Jagdeep Saini</h3>
             <p>Broker of Record</p>
@@ -75,12 +75,16 @@
             </div>
 
             <div class="agent-secure-info">
-              <span>Password</span>
-              <strong>12345678</strong>
+              <span>Public Profile</span>
+              <strong>Visible</strong>
             </div>
+
+            <button class="danger-btn" type="button" disabled title="The Broker of Record account cannot be deleted">
+              Permanent Admin Account
+            </button>
           </article>
 
-          <article class="mini-agent-card">
+          <article class="mini-agent-card" data-agent-id="sid-test-agent" data-agent-role="agent" data-public-profile="true">
             <div class="mini-avatar">SK</div>
             <h3>Sid Kamboj</h3>
             <p>Marketing Manager</p>
@@ -92,9 +96,13 @@
             </div>
 
             <div class="agent-secure-info">
-              <span>Password</span>
-              <strong>12345678</strong>
+              <span>Public Profile</span>
+              <strong>Visible</strong>
             </div>
+
+            <button class="danger-btn" type="button" data-deactivate-agent="sid-test-agent">
+              Delete Profile
+            </button>
           </article>
         </div>
       </main>

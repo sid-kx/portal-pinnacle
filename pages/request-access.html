@@ -25,22 +25,29 @@
         <p class="brand-kicker">Agent Access Request</p>
         <h1>Request access to the Pinnacle portal.</h1>
         <p class="brand-subtext">
-          New agents can submit their information here. The Broker of Record must approve the account before access is granted.
+          New agents can submit their information here. The Broker of Record must approve the account before access is granted and before the profile appears publicly.
         </p>
       </div>
 
       <form class="login-form" id="requestAccessForm">
         <label for="requestName">Full Name</label>
-        <input type="text" id="requestName" placeholder="Your full name" required />
+        <input type="text" id="requestName" name="full_name" placeholder="Your full name" required />
 
         <label for="requestEmail">Email Address</label>
-        <input type="email" id="requestEmail" placeholder="your@email.com" required />
+        <input type="email" id="requestEmail" name="email" placeholder="your@email.com" required />
 
         <label for="requestPhone">Phone Number</label>
-        <input type="tel" id="requestPhone" placeholder="905-000-0000" required />
+        <input type="tel" id="requestPhone" name="phone" placeholder="905-000-0000" required />
+
+        <label for="requestLicense">RECO / License Number</label>
+        <input type="text" id="requestLicense" name="license_number" placeholder="Optional for backend record" />
 
         <label for="requestPassword">Choose Password</label>
-        <input type="password" id="requestPassword" placeholder="Minimum 8 characters" required minlength="8" />
+        <input type="password" id="requestPassword" name="password" placeholder="Minimum 8 characters" required minlength="8" />
+
+        <input type="hidden" id="requestRole" name="role" value="agent" />
+        <input type="hidden" id="requestStatus" name="status" value="pending" />
+        <input type="hidden" id="requestPublicStatus" name="is_public" value="false" />
 
         <button type="submit" class="primary-btn">Submit Request</button>
 

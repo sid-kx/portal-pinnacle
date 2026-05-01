@@ -247,6 +247,7 @@ img {
 .login-form input,
 .profile-form input,
 .profile-form textarea,
+.profile-form select,
 .settings-card input {
   width: 100%;
   border: 1px solid var(--border-strong);
@@ -274,9 +275,16 @@ img {
   color: rgba(247, 243, 232, 0.42);
 }
 
+.profile-form select {
+  min-height: 58px;
+  appearance: none;
+  cursor: pointer;
+}
+
 .login-form input:focus,
 .profile-form input:focus,
 .profile-form textarea:focus,
+.profile-form select:focus,
 .settings-card input:focus {
   border-color: var(--border-gold);
   box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.08);
@@ -293,6 +301,7 @@ img {
 .ghost-btn,
 .logout-btn,
 .small-btn,
+.danger-btn,
 .nav-link,
 .mobile-menu-btn,
 .text-btn,
@@ -303,7 +312,8 @@ img {
     background 0.22s ease,
     border 0.22s ease,
     color 0.22s ease,
-    box-shadow 0.22s ease;
+    box-shadow 0.22s ease,
+    opacity 0.22s ease;
 }
 
 .primary-btn {
@@ -982,7 +992,6 @@ tr:last-child td {
   color: var(--text);
   border: 1px solid var(--border);
   background: rgba(255, 255, 255, 0.06);
-  margin-right: 6px;
 }
 
 .small-btn:hover {
@@ -999,6 +1008,46 @@ tr:last-child td {
   color: #fff;
   background: rgba(255, 107, 107, 0.18);
   border-color: rgba(255, 107, 107, 0.35);
+}
+
+.danger-btn {
+  width: 100%;
+  min-height: 44px;
+  margin-top: 18px;
+  padding: 0 18px;
+  color: #fff;
+  font-weight: 850;
+  border: 1px solid rgba(255, 107, 107, 0.38);
+  background: rgba(255, 107, 107, 0.12);
+}
+
+.danger-btn:hover:not(:disabled) {
+  color: #fff;
+  transform: translateY(-2px);
+  border-color: rgba(255, 107, 107, 0.62);
+  background: rgba(255, 107, 107, 0.2);
+  box-shadow: 0 16px 34px rgba(255, 107, 107, 0.12);
+}
+
+.danger-btn:disabled {
+  cursor: not-allowed;
+  color: var(--gold-light);
+  border-color: rgba(212, 175, 55, 0.28);
+  background: rgba(212, 175, 55, 0.075);
+  opacity: 0.82;
+}
+
+
+
+.table-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.project-form-card {
+  margin: 0 0 24px;
+  padding: 28px;
 }
 
 /* CARDS */
@@ -1237,7 +1286,11 @@ tr:last-child td {
   }
 
   table {
-    min-width: 680px;
+    min-width: 760px;
+  }
+
+  .project-form-card {
+    padding: 22px;
   }
 }
 

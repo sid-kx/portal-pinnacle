@@ -28,6 +28,14 @@ const sidebar = document.getElementById("sidebar");
 const profileForm = document.getElementById("profileForm");
 const profileMessage = document.getElementById("profileMessage");
 const passwordToggles = document.querySelectorAll("[data-password-toggle]");
+const agentApprovalsTableBody = document.getElementById("agentApprovalsTableBody");
+const agentApprovalsEmptyState = document.getElementById("agentApprovalsEmptyState");
+const projectFormCard = document.getElementById("projectFormCard");
+const newConstructionForm = document.getElementById("newConstructionForm");
+const projectMessage = document.getElementById("projectMessage");
+const addProjectBtn = document.getElementById("addProjectBtn");
+const cancelProjectBtn = document.getElementById("cancelProjectBtn");
+const resetProjectBtn = document.getElementById("resetProjectBtn");
 
 function getBasePath() {
   return window.location.pathname.includes("/pages/") ? "../" : "";
@@ -146,16 +154,31 @@ function setupRequestAccess() {
   requestAccessForm.addEventListener("submit", (event) => {
     event.preventDefault();
 
-    const password = document.getElementById("requestPassword").value;
+    const formData = new FormData(requestAccessForm);
+    const requestPayload = {
+      full_name: formData.get("full_name")?.trim(),
+      email: formData.get("email")?.trim().toLowerCase(),
+      phone: formData.get("phone")?.trim(),
+      license_number: formData.get("license_number")?.trim(),
+      role: formData.get("role") || "agent",
+      status: formData.get("status") || "pending",
+      is_public: formData.get("is_public") === "true",
+      requested_at: new Date().toISOString(),
+    };
+
+    const password = formData.get("password") || "";
 
     if (password.length < 8) {
       requestMessage.textContent = "Password must be at least 8 characters.";
       requestMessage.classList.add("error");
+      requestMessage.classList.remove("success");
       return;
     }
 
+    console.log("Ready to submit access request to Supabase:", requestPayload);
+
     requestMessage.textContent =
-      "Access request prepared. Supabase approval workflow will be connected next.";
+      "Access request prepared. Supabase will save this as a pending request for broker approval.";
     requestMessage.classList.remove("error");
     requestMessage.classList.add("success");
 
@@ -220,9 +243,229 @@ function setupProfileForm() {
   profileForm.addEventListener("submit", (event) => {
     event.preventDefault();
 
+    const session = getSession();
+    const formData = new FormData(profileForm);
+    const profilePayload = {
+      user_email: session?.email,
+      full_name: formData.get("full_name")?.trim(),
+      email: formData.get("email")?.trim().toLowerCase(),
+      direct_phone: formData.get("direct_phone")?.trim(),
+      office_phone: formData.get("office_phone")?.trim(),
+      bio: formData.get("bio")?.trim(),
+      instagram_url: formData.get("instagram_url")?.trim(),
+      facebook_url: formData.get("facebook_url")?.trim(),
+      linkedin_url: formData.get("linkedin_url")?.trim(),
+      twitter_url: formData.get("twitter_url")?.trim(),
+      youtube_url: formData.get("youtube_url")?.trim(),
+      profile_status: formData.get("profile_status") || "active",
+      is_public: formData.get("is_public") === "true",
+      updated_at: new Date().toISOString(),
+    };
+
+    console.log("Ready to save agent profile to Supabase:", profilePayload);
+
     profileMessage.textContent =
-      "Profile saved locally. Supabase database and Storage will be connected next.";
+      "Profile prepared. Supabase database and Storage will save this public profile next.";
+    profileMessage.classList.remove("error");
     profileMessage.classList.add("success");
+  });
+}
+
+function setupDeactivateAgentButtons() {
+  const deactivateButtons = document.querySelectorAll("[data-deactivate-agent]");
+
+  if (!deactivateButtons.length) {
+    return;
+  }
+
+  deactivateButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const session = getSession();
+      const agentId = button.dataset.deactivateAgent;
+      const agentCard = button.closest("[data-agent-id]");
+
+      if (!session || session.role !== "broker") {
+        alert("Only the Broker of Record can delete agent profiles.");
+        return;
+      }
+
+      const confirmed = confirm(
+        "Are you sure you want to delete this agent profile? Once Supabase is connected, this will disable their portal access and remove them from the public website."
+      );
+
+      if (!confirmed) {
+        return;
+      }
+
+      const deactivatePayload = {
+        agent_id: agentId,
+        account_status: "disabled",
+        profile_status: "inactive",
+        is_public: false,
+        deactivated_by: session.email,
+        deactivated_at: new Date().toISOString(),
+      };
+
+      console.log("Ready to deactivate agent in Supabase:", deactivatePayload);
+
+      if (agentCard) {
+        agentCard.dataset.publicProfile = "false";
+        const statusBadge = agentCard.querySelector(".status");
+        const publicStatus = agentCard.querySelector(".agent-secure-info:last-of-type strong");
+
+        if (statusBadge) {
+          statusBadge.textContent = "Inactive";
+          statusBadge.classList.remove("active");
+          statusBadge.classList.add("pending");
+        }
+
+        if (publicStatus) {
+          publicStatus.textContent = "Hidden";
+        }
+      }
+
+      alert(
+        "Delete profile action is ready. Supabase will deactivate this account and remove it from the public website next."
+      );
+    });
+  });
+}
+
+function setupAgentApprovalActions() {
+  if (!agentApprovalsTableBody) {
+    return;
+  }
+
+  agentApprovalsTableBody.addEventListener("click", (event) => {
+    const approveButton = event.target.closest("[data-approve-agent]");
+    const rejectButton = event.target.closest("[data-reject-agent]");
+
+    if (!approveButton && !rejectButton) {
+      return;
+    }
+
+    const session = getSession();
+
+    if (!session || session.role !== "broker") {
+      alert("Only the Broker of Record can manage agent approvals.");
+      return;
+    }
+
+    const action = approveButton ? "approved" : "rejected";
+    const requestId = approveButton
+      ? approveButton.dataset.approveAgent
+      : rejectButton.dataset.rejectAgent;
+
+    const confirmed = confirm(
+      action === "approved"
+        ? "Approve this agent request and allow portal access?"
+        : "Reject this agent request?"
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    const approvalPayload = {
+      request_id: requestId,
+      status: action,
+      approved_by: action === "approved" ? session.email : null,
+      rejected_by: action === "rejected" ? session.email : null,
+      reviewed_at: new Date().toISOString(),
+      is_public: action === "approved",
+      account_status: action === "approved" ? "active" : "rejected",
+    };
+
+    console.log("Ready to update agent request in Supabase:", approvalPayload);
+
+    const row = event.target.closest("tr");
+
+    if (row) {
+      row.remove();
+    }
+
+    const hasPendingRows = agentApprovalsTableBody.querySelector("tr[data-request-id]");
+
+    if (!hasPendingRows && agentApprovalsEmptyState) {
+      agentApprovalsEmptyState.hidden = false;
+    }
+
+    alert(
+      action === "approved"
+        ? "Approval action is ready. Supabase will activate this agent and publish their profile next."
+        : "Rejection action is ready. Supabase will keep this request rejected and block access next."
+    );
+  });
+}
+
+function setupNewConstructionTools() {
+  if (addProjectBtn && projectFormCard) {
+    addProjectBtn.addEventListener("click", () => {
+      projectFormCard.hidden = false;
+      projectFormCard.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
+
+  if (cancelProjectBtn && projectFormCard) {
+    cancelProjectBtn.addEventListener("click", () => {
+      projectFormCard.hidden = true;
+    });
+  }
+
+  if (resetProjectBtn && newConstructionForm) {
+    resetProjectBtn.addEventListener("click", () => {
+      newConstructionForm.reset();
+    });
+  }
+
+  if (newConstructionForm) {
+    newConstructionForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+
+      const session = getSession();
+      const formData = new FormData(newConstructionForm);
+      const projectPayload = {
+        project_name: formData.get("project_name")?.trim(),
+        location: formData.get("location")?.trim(),
+        starting_price: formData.get("starting_price")?.trim(),
+        status: formData.get("status"),
+        description: formData.get("description")?.trim(),
+        is_public: formData.get("is_public") === "true",
+        created_by: session?.email,
+        updated_at: new Date().toISOString(),
+      };
+
+      console.log("Ready to save new construction project to Supabase:", projectPayload);
+
+      if (projectMessage) {
+        projectMessage.textContent =
+          "Project prepared. Supabase database and Storage will save this listing next.";
+        projectMessage.classList.remove("error");
+        projectMessage.classList.add("success");
+      }
+    });
+  }
+
+  document.querySelectorAll("[data-edit-project]").forEach((button) => {
+    button.addEventListener("click", () => {
+      console.log("Ready to load project for editing from Supabase:", button.dataset.editProject);
+      alert("Edit project action is ready for Supabase.");
+    });
+  });
+
+  document.querySelectorAll("[data-delete-project]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const confirmed = confirm(
+        "Delete this new construction project? Once Supabase is connected, this will remove it from the public website."
+      );
+
+      if (!confirmed) {
+        return;
+      }
+
+      console.log("Ready to delete project from Supabase:", button.dataset.deleteProject);
+      alert("Delete project action is ready for Supabase.");
+    });
   });
 }
 
@@ -263,4 +506,7 @@ setupMobileMenu();
 setupLogoutButtons();
 setupPasswordToggles();
 setupProfileForm();
+setupDeactivateAgentButtons();
+setupAgentApprovalActions();
+setupNewConstructionTools();
 setupSettingsPage();
