@@ -662,7 +662,7 @@ function setupProfileForm() {
     }
 
     profileMessage.textContent = bio
-      ? "Profile saved. Once connected to the public site, this profile can appear on the agents page."
+      ? "Profile saved. This profile can appear on the agents page."
       : "Profile saved. Add a bio before this profile appears on the public agents page.";
     profileMessage.classList.remove("error");
     profileMessage.classList.add("success");
