@@ -383,7 +383,7 @@ async function loadAgentProfile() {
 
   const { data, error } = await supabaseClient
     .from("agent_profiles")
-    .select("full_name, email, direct_phone, office_phone, bio, instagram_url, facebook_url, linkedin_url, twitter_url, youtube_url, profile_status, is_public")
+    .select("full_name, email, direct_phone, office_phone, bio, profile_image_url, instagram_url, facebook_url, linkedin_url, twitter_url, youtube_url, profile_status, is_public")
     .eq("auth_user_id", portalUser.auth_user_id)
     .maybeSingle();
 
@@ -415,6 +415,59 @@ async function loadAgentProfile() {
   if (publicStatus) {
     publicStatus.value = String(data?.is_public ?? true);
   }
+
+  const imagePreview = document.getElementById("profileImagePreview");
+  if (imagePreview && data?.profile_image_url) {
+    imagePreview.src = data.profile_image_url;
+    imagePreview.alt = `${data.full_name || portalUser.full_name || "Agent"} profile photo`;
+    imagePreview.hidden = false;
+  }
+}
+
+async function uploadAgentProfileImage(portalUser) {
+  const imageInput =
+    profileForm.querySelector('[name="profile_image"]') ||
+    profileForm.querySelector('[name="profileImage"]') ||
+    profileForm.querySelector('#profileImage') ||
+    profileForm.querySelector('#profile_image');
+
+  const imageFile = imageInput?.files?.[0];
+
+  if (!imageFile) {
+    return null;
+  }
+
+  const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+
+  if (!allowedTypes.includes(imageFile.type)) {
+    throw new Error("Profile image must be a JPG, PNG, or WEBP file.");
+  }
+
+  const maxSize = 5 * 1024 * 1024;
+
+  if (imageFile.size > maxSize) {
+    throw new Error("Profile image must be smaller than 5 MB.");
+  }
+
+  const extension = imageFile.name.split(".").pop()?.toLowerCase() || "jpg";
+  const filePath = `${portalUser.auth_user_id}/profile-${Date.now()}.${extension}`;
+
+  const { error: uploadError } = await supabaseClient.storage
+    .from("agent-profile-images")
+    .upload(filePath, imageFile, {
+      cacheControl: "3600",
+      upsert: true,
+    });
+
+  if (uploadError) {
+    throw uploadError;
+  }
+
+  const { data } = supabaseClient.storage
+    .from("agent-profile-images")
+    .getPublicUrl(filePath);
+
+  return data.publicUrl;
 }
 
 function setupProfileForm() {
@@ -476,6 +529,22 @@ function setupProfileForm() {
     profileMessage.textContent = "Saving profile...";
     profileMessage.classList.remove("error", "success");
 
+    let profileImageUrl = null;
+
+    try {
+      profileImageUrl = await uploadAgentProfileImage(portalUser);
+    } catch (imageError) {
+      profileMessage.textContent = imageError.message || "Profile image upload failed.";
+      profileMessage.classList.add("error");
+      profileMessage.classList.remove("success");
+      console.error("Profile image upload error:", imageError);
+      return;
+    }
+
+    if (profileImageUrl) {
+      profilePayload.profile_image_url = profileImageUrl;
+    }
+
     const { error } = await supabaseClient
       .from("agent_profiles")
       .upsert(profilePayload, { onConflict: "auth_user_id" });
@@ -493,6 +562,13 @@ function setupProfileForm() {
       : "Profile saved. Add a bio before this profile appears on the public agents page.";
     profileMessage.classList.remove("error");
     profileMessage.classList.add("success");
+
+    const imagePreview = document.getElementById("profileImagePreview");
+    if (imagePreview && profileImageUrl) {
+      imagePreview.src = profileImageUrl;
+      imagePreview.alt = `${fullName} profile photo`;
+      imagePreview.hidden = false;
+    }
   });
 }
 
