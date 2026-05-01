@@ -1,19 +1,3 @@
-const FRONTEND_USERS = [
-  {
-    email: "jag@pinnaclerealty.ca",
-    password: "12345678",
-    role: "broker",
-    name: "Jagdeep Saini",
-    redirect: "pages/broker-dashboard.html",
-  },
-  {
-    email: "marketing@pinnaclerealty.ca",
-    password: "12345678",
-    role: "agent",
-    name: "Sid Kamboj",
-    redirect: "pages/agent-dashboard.html",
-  },
-];
 
 const loginForm = document.getElementById("loginForm");
 const loginMessage = document.getElementById("loginMessage");
@@ -37,6 +21,39 @@ const addProjectBtn = document.getElementById("addProjectBtn");
 const cancelProjectBtn = document.getElementById("cancelProjectBtn");
 const resetProjectBtn = document.getElementById("resetProjectBtn");
 
+function hasSupabase() {
+  return typeof supabaseClient !== "undefined" && supabaseClient;
+}
+
+function getRedirectForRole(role) {
+  const basePath = getBasePath();
+
+  if (role === "broker") {
+    return `${basePath}pages/broker-dashboard.html`;
+  }
+
+  return `${basePath}pages/agent-dashboard.html`;
+}
+
+async function getPortalUserByAuthId(authUserId) {
+  if (!hasSupabase() || !authUserId) {
+    return null;
+  }
+
+  const { data, error } = await supabaseClient
+    .from("portal_users")
+    .select("id, auth_user_id, full_name, email, role, account_status, is_permanent_admin")
+    .eq("auth_user_id", authUserId)
+    .single();
+
+  if (error) {
+    console.error("Could not load portal user:", error);
+    return null;
+  }
+
+  return data;
+}
+
 function getBasePath() {
   return window.location.pathname.includes("/pages/") ? "../" : "";
 }
@@ -45,9 +62,13 @@ function saveSession(user) {
   localStorage.setItem(
     "pinnaclePortalUser",
     JSON.stringify({
+      id: user.id,
+      auth_user_id: user.auth_user_id,
       email: user.email,
       role: user.role,
-      name: user.name,
+      name: user.full_name || user.name,
+      account_status: user.account_status,
+      is_permanent_admin: Boolean(user.is_permanent_admin),
       signedInAt: new Date().toISOString(),
     })
   );
@@ -68,31 +89,59 @@ function getSession() {
   }
 }
 
-function logout() {
+async function logout() {
   localStorage.removeItem("pinnaclePortalUser");
+
+  if (hasSupabase()) {
+    await supabaseClient.auth.signOut();
+  }
+
   window.location.href = `${getBasePath()}index.html`;
 }
 
-function protectPage() {
+async function protectPage() {
   const requiredRole = document.body.dataset.protected;
 
   if (!requiredRole) {
     return;
   }
 
-  const session = getSession();
+  if (!hasSupabase()) {
+    const session = getSession();
 
-  if (!session) {
+    if (!session) {
+      window.location.href = "../index.html";
+      return;
+    }
+
+    if (requiredRole !== "any" && session.role !== requiredRole) {
+      window.location.href = session.role === "broker" ? "broker-dashboard.html" : "agent-dashboard.html";
+    }
+
+    return;
+  }
+
+  const { data: authData, error: authError } = await supabaseClient.auth.getUser();
+
+  if (authError || !authData.user) {
+    localStorage.removeItem("pinnaclePortalUser");
     window.location.href = "../index.html";
     return;
   }
 
-  if (requiredRole !== "any" && session.role !== requiredRole) {
-    if (session.role === "broker") {
-      window.location.href = "broker-dashboard.html";
-    } else {
-      window.location.href = "agent-dashboard.html";
-    }
+  const portalUser = await getPortalUserByAuthId(authData.user.id);
+
+  if (!portalUser || portalUser.account_status !== "active") {
+    localStorage.removeItem("pinnaclePortalUser");
+    await supabaseClient.auth.signOut();
+    window.location.href = "../index.html";
+    return;
+  }
+
+  saveSession(portalUser);
+
+  if (requiredRole !== "any" && portalUser.role !== requiredRole) {
+    window.location.href = portalUser.role === "broker" ? "broker-dashboard.html" : "agent-dashboard.html";
   }
 }
 
@@ -101,24 +150,50 @@ function setupLogin() {
     return;
   }
 
-  loginForm.addEventListener("submit", (event) => {
+  loginForm.addEventListener("submit", async (event) => {
     event.preventDefault();
 
     const email = document.getElementById("email").value.trim().toLowerCase();
     const password = document.getElementById("password").value;
 
-    const user = FRONTEND_USERS.find(
-      (account) => account.email === email && account.password === password
-    );
+    loginMessage.textContent = "Signing in...";
+    loginMessage.classList.remove("error", "success");
 
-    if (!user) {
+    if (!hasSupabase()) {
+      loginMessage.textContent = "Supabase is not connected yet. Add supabase-config.js first.";
+      loginMessage.classList.add("error");
+      return;
+    }
+
+    const { data, error } = await supabaseClient.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error || !data.user) {
       loginMessage.textContent = "Invalid email or password.";
       loginMessage.classList.add("error");
       return;
     }
 
-    saveSession(user);
-    window.location.href = user.redirect;
+    const portalUser = await getPortalUserByAuthId(data.user.id);
+
+    if (!portalUser) {
+      await supabaseClient.auth.signOut();
+      loginMessage.textContent = "Your portal profile was not found. Please contact the Broker of Record.";
+      loginMessage.classList.add("error");
+      return;
+    }
+
+    if (portalUser.account_status !== "active") {
+      await supabaseClient.auth.signOut();
+      loginMessage.textContent = "Your portal account is not active yet. Please wait for broker approval.";
+      loginMessage.classList.add("error");
+      return;
+    }
+
+    saveSession(portalUser);
+    window.location.href = getRedirectForRole(portalUser.role);
   });
 }
 
@@ -207,7 +282,9 @@ function setupMobileMenu() {
 
 function setupLogoutButtons() {
   document.querySelectorAll("[data-logout]").forEach((button) => {
-    button.addEventListener("click", logout);
+    button.addEventListener("click", () => {
+      logout();
+    });
   });
 }
 
@@ -498,15 +575,19 @@ function setupSettingsPage() {
   document.getElementById("settingsRole").textContent = "Broker of Record";
 }
 
-protectPage();
-setupLogin();
-setupForgotPasswordModal();
-setupRequestAccess();
-setupMobileMenu();
-setupLogoutButtons();
-setupPasswordToggles();
-setupProfileForm();
-setupDeactivateAgentButtons();
-setupAgentApprovalActions();
-setupNewConstructionTools();
-setupSettingsPage();
+async function initPortal() {
+  await protectPage();
+  setupLogin();
+  setupForgotPasswordModal();
+  setupRequestAccess();
+  setupMobileMenu();
+  setupLogoutButtons();
+  setupPasswordToggles();
+  setupProfileForm();
+  setupDeactivateAgentButtons();
+  setupAgentApprovalActions();
+  setupNewConstructionTools();
+  setupSettingsPage();
+}
+
+initPortal();
