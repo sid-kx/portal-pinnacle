@@ -54,6 +54,21 @@ async function getPortalUserByAuthId(authUserId) {
   return data;
 }
 
+// Helper to get the current portal user, using Supabase if available, otherwise falling back to local session
+async function getCurrentPortalUser() {
+  if (!hasSupabase()) {
+    return getSession();
+  }
+
+  const { data: authData, error: authError } = await supabaseClient.auth.getUser();
+
+  if (authError || !authData.user) {
+    return null;
+  }
+
+  return getPortalUserByAuthId(authData.user.id);
+}
+
 function getBasePath() {
   return window.location.pathname.includes("/pages/") ? "../" : "";
 }
@@ -354,37 +369,128 @@ function setupPasswordToggles() {
   });
 }
 
+// Loads the agent profile from Supabase and populates the form fields
+async function loadAgentProfile() {
+  if (!profileForm || !hasSupabase()) {
+    return;
+  }
+
+  const portalUser = await getCurrentPortalUser();
+
+  if (!portalUser) {
+    return;
+  }
+
+  const { data, error } = await supabaseClient
+    .from("agent_profiles")
+    .select("full_name, email, direct_phone, office_phone, bio, instagram_url, facebook_url, linkedin_url, twitter_url, youtube_url, profile_status, is_public")
+    .eq("auth_user_id", portalUser.auth_user_id)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Could not load agent profile:", error);
+    return;
+  }
+
+  const setValue = (selector, value) => {
+    const field = profileForm.querySelector(selector);
+    if (field) {
+      field.value = value || "";
+    }
+  };
+
+  setValue('[name="full_name"]', data?.full_name || portalUser.full_name || portalUser.name);
+  setValue('[name="email"]', data?.email || portalUser.email);
+  setValue('[name="direct_phone"]', data?.direct_phone);
+  setValue('[name="office_phone"]', data?.office_phone || "(905) 609-7653");
+  setValue('[name="bio"]', data?.bio);
+  setValue('[name="instagram_url"]', data?.instagram_url);
+  setValue('[name="facebook_url"]', data?.facebook_url);
+  setValue('[name="linkedin_url"]', data?.linkedin_url);
+  setValue('[name="twitter_url"]', data?.twitter_url);
+  setValue('[name="youtube_url"]', data?.youtube_url);
+  setValue('[name="profile_status"]', data?.profile_status || "active");
+
+  const publicStatus = profileForm.querySelector('[name="is_public"]');
+  if (publicStatus) {
+    publicStatus.value = String(data?.is_public ?? true);
+  }
+}
+
 function setupProfileForm() {
   if (!profileForm) {
     return;
   }
 
-  profileForm.addEventListener("submit", (event) => {
+  loadAgentProfile();
+
+  profileForm.addEventListener("submit", async (event) => {
     event.preventDefault();
 
-    const session = getSession();
+    if (!hasSupabase()) {
+      profileMessage.textContent = "Supabase is not connected.";
+      profileMessage.classList.add("error");
+      profileMessage.classList.remove("success");
+      return;
+    }
+
+    const portalUser = await getCurrentPortalUser();
+
+    if (!portalUser) {
+      profileMessage.textContent = "Your portal session could not be found. Please log in again.";
+      profileMessage.classList.add("error");
+      profileMessage.classList.remove("success");
+      return;
+    }
+
     const formData = new FormData(profileForm);
+    const fullName = formData.get("full_name")?.trim();
+    const email = formData.get("email")?.trim().toLowerCase();
+    const bio = formData.get("bio")?.trim();
+
+    if (!fullName || !email) {
+      profileMessage.textContent = "Name and email are required.";
+      profileMessage.classList.add("error");
+      profileMessage.classList.remove("success");
+      return;
+    }
+
     const profilePayload = {
-      user_email: session?.email,
-      full_name: formData.get("full_name")?.trim(),
-      email: formData.get("email")?.trim().toLowerCase(),
-      direct_phone: formData.get("direct_phone")?.trim(),
-      office_phone: formData.get("office_phone")?.trim(),
-      bio: formData.get("bio")?.trim(),
-      instagram_url: formData.get("instagram_url")?.trim(),
-      facebook_url: formData.get("facebook_url")?.trim(),
-      linkedin_url: formData.get("linkedin_url")?.trim(),
-      twitter_url: formData.get("twitter_url")?.trim(),
-      youtube_url: formData.get("youtube_url")?.trim(),
+      portal_user_id: portalUser.id,
+      auth_user_id: portalUser.auth_user_id,
+      full_name: fullName,
+      email,
+      direct_phone: formData.get("direct_phone")?.trim() || null,
+      office_phone: formData.get("office_phone")?.trim() || "(905) 609-7653",
+      bio: bio || null,
+      instagram_url: formData.get("instagram_url")?.trim() || null,
+      facebook_url: formData.get("facebook_url")?.trim() || null,
+      linkedin_url: formData.get("linkedin_url")?.trim() || null,
+      twitter_url: formData.get("twitter_url")?.trim() || null,
+      youtube_url: formData.get("youtube_url")?.trim() || null,
       profile_status: formData.get("profile_status") || "active",
       is_public: formData.get("is_public") === "true",
       updated_at: new Date().toISOString(),
     };
 
-    console.log("Ready to save agent profile to Supabase:", profilePayload);
+    profileMessage.textContent = "Saving profile...";
+    profileMessage.classList.remove("error", "success");
 
-    profileMessage.textContent =
-      "Profile prepared. Supabase database and Storage will save this public profile next.";
+    const { error } = await supabaseClient
+      .from("agent_profiles")
+      .upsert(profilePayload, { onConflict: "auth_user_id" });
+
+    if (error) {
+      profileMessage.textContent = error.message;
+      profileMessage.classList.add("error");
+      profileMessage.classList.remove("success");
+      console.error("Profile save error:", error);
+      return;
+    }
+
+    profileMessage.textContent = bio
+      ? "Profile saved. Once connected to the public site, this profile can appear on the agents page."
+      : "Profile saved. Add a bio before this profile appears on the public agents page.";
     profileMessage.classList.remove("error");
     profileMessage.classList.add("success");
   });
