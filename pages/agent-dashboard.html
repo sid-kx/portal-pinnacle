@@ -44,9 +44,9 @@
         </div>
 
         <div class="profile-pill">
-          <div class="profile-avatar">S</div>
+          <div class="profile-avatar" data-agent-avatar>AG</div>
           <div>
-            <strong>Sid Kamboj</strong>
+            <strong data-agent-name>Agent</strong>
             <span>Agent Account</span>
           </div>
         </div>
@@ -87,12 +87,12 @@
 
         <section class="preview-card">
           <div class="agent-preview">
-            <div class="agent-photo-preview">SK</div>
+            <div class="agent-photo-preview" data-agent-avatar>AG</div>
             <div>
               <p class="eyebrow">Profile Preview</p>
-              <h3>Sid Kamboj</h3>
-              <p>
-                This preview will later display the agent’s saved Supabase profile information.
+              <h3 data-agent-name>Agent</h3>
+              <p data-agent-preview-bio>
+                Complete your profile to preview how your public information will appear.
               </p>
 
               <div class="social-row">
@@ -108,7 +108,6 @@
       </main>
     </div>
   </section>
-
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../supabase-config.js"></script>

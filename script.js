@@ -370,35 +370,89 @@ function setupPasswordToggles() {
 }
 
 function updateProfileImagePreview(imageUrl, fullName = "Agent") {
-  if (!imageUrl || !profileForm) {
+  if (!imageUrl) {
     return;
   }
 
-  const previewElement =
-    document.getElementById("profileImagePreview") ||
-    document.getElementById("profilePreview") ||
-    document.getElementById("profileAvatar") ||
-    document.querySelector(".profile-image-preview") ||
-    document.querySelector(".profile-preview") ||
-    document.querySelector(".profile-avatar") ||
-    document.querySelector(".image-preview");
+  const avatarTargets = document.querySelectorAll(
+    "[data-agent-avatar], .profile-pill .profile-avatar, .upload-preview, .agent-photo-preview"
+  );
 
-  if (!previewElement) {
+  if (!avatarTargets.length) {
     return;
   }
 
   const altText = `${fullName} profile photo`;
 
-  if (previewElement.tagName === "IMG") {
-    previewElement.src = imageUrl;
-    previewElement.alt = altText;
-    previewElement.hidden = false;
+  avatarTargets.forEach((avatar) => {
+    avatar.innerHTML = `<img src="${imageUrl}" alt="${altText}" loading="lazy" decoding="async" />`;
+    avatar.classList.add("has-image");
+    avatar.hidden = false;
+  });
+}
+
+async function setupAgentIdentityUI() {
+  const requiredRole = document.body.dataset.protected;
+
+  if (requiredRole !== "agent") {
     return;
   }
 
-  previewElement.innerHTML = `<img src="${imageUrl}" alt="${altText}" loading="lazy" decoding="async" />`;
-  previewElement.classList.add("has-image");
-  previewElement.hidden = false;
+  const portalUser = await getCurrentPortalUser();
+
+  if (!portalUser) {
+    return;
+  }
+
+  let profile = null;
+
+  if (hasSupabase()) {
+    const { data, error } = await supabaseClient
+      .from("agent_profiles")
+      .select("full_name, bio, profile_image_url")
+      .eq("auth_user_id", portalUser.auth_user_id)
+      .maybeSingle();
+
+    if (error) {
+      console.error("Could not load agent identity:", error);
+    } else {
+      profile = data;
+    }
+  }
+
+  const displayName = profile?.full_name || portalUser.full_name || portalUser.name || "Agent";
+  const displayBio = profile?.bio || "Complete your profile to preview how your public information will appear.";
+  const initials =
+    displayName
+      .split(" ")
+      .filter(Boolean)
+      .map((part) => part[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase() || "AG";
+
+  document.querySelectorAll("[data-agent-name]").forEach((target) => {
+    target.textContent = displayName;
+  });
+
+  const previewBio = document.querySelector("[data-agent-preview-bio]");
+  if (previewBio) {
+    previewBio.textContent = displayBio.length > 170 ? `${displayBio.slice(0, 170)}...` : displayBio;
+  }
+
+  const avatarTargets = document.querySelectorAll(
+    "[data-agent-avatar], .profile-pill .profile-avatar, .upload-preview, .agent-photo-preview"
+  );
+
+  avatarTargets.forEach((avatar) => {
+    if (profile?.profile_image_url) {
+      avatar.innerHTML = `<img src="${profile.profile_image_url}" alt="${displayName} profile photo" loading="lazy" decoding="async" />`;
+      avatar.classList.add("has-image");
+    } else {
+      avatar.textContent = initials;
+      avatar.classList.remove("has-image");
+    }
+  });
 }
 
 // Loads the agent profile from Supabase and populates the form fields
@@ -450,6 +504,8 @@ async function loadAgentProfile() {
 
   if (data?.profile_image_url) {
     updateProfileImagePreview(data.profile_image_url, data.full_name || portalUser.full_name || "Agent");
+  } else {
+    await setupAgentIdentityUI();
   }
 }
 
@@ -614,6 +670,19 @@ function setupProfileForm() {
     if (profileImageUrl) {
       updateProfileImagePreview(profileImageUrl, fullName);
     }
+
+    document.querySelectorAll("[data-agent-name]").forEach((target) => {
+      target.textContent = fullName;
+    });
+
+    const previewBio = document.querySelector("[data-agent-preview-bio]");
+    if (previewBio) {
+      previewBio.textContent = bio
+        ? bio.length > 170
+          ? `${bio.slice(0, 170)}...`
+          : bio
+        : "Complete your profile to preview how your public information will appear.";
+    }
   });
 }
 
@@ -627,6 +696,7 @@ async function loadAgentsForBroker() {
   const { data, error } = await supabaseClient
     .from("portal_users")
     .select("id, full_name, email, role, account_status, is_permanent_admin, created_at")
+    .eq("account_status", "active")
     .order("created_at", { ascending: true });
 
   if (error) {
@@ -974,6 +1044,7 @@ async function initPortal() {
   setupMobileMenu();
   setupLogoutButtons();
   setupPasswordToggles();
+  await setupAgentIdentityUI();
   setupProfileForm();
   setupDeactivateAgentButtons();
   setupAgentApprovalActions();

@@ -49,7 +49,7 @@
         <div class="profile-pill">
           <div class="profile-avatar">J</div>
           <div>
-            <strong>Jagdeep Saini</strong>
+            <strong>Jag Saini</strong>
             <span>Broker of Record</span>
           </div>
         </div>
@@ -68,46 +68,57 @@
           <a class="primary-btn" href="agent-approvals.html">Review Approvals</a>
         </section>
 
-        <div class="stats-grid broker-stats">
-          <article class="stat-card">
-            <span>Pending Agents</span>
-            <strong>0</strong>
-            <p>No pending approval requests right now.</p>
-          </article>
+        <section class="broker-action-grid" aria-label="Broker dashboard actions">
+          <a href="agent-approvals.html" class="broker-action-card">
+            <span>01</span>
+            <strong>Review Agent Requests</strong>
+            <p>Approve or reject new portal access requests submitted by agents.</p>
+          </a>
 
-          <article class="stat-card">
-            <span>Active Agents</span>
-            <strong>2</strong>
-            <p>Broker and marketing accounts are currently set.</p>
-          </article>
+          <a href="agents.html" class="broker-action-card">
+            <span>02</span>
+            <strong>Manage Agents</strong>
+            <p>View active portal accounts and delete agent profiles when needed.</p>
+          </a>
 
-          <article class="stat-card">
-            <span>Projects</span>
-            <strong>0</strong>
-            <p>New construction entries will be added by the broker.</p>
-          </article>
-        </div>
+          <a href="new-construction.html" class="broker-action-card">
+            <span>03</span>
+            <strong>New Construction</strong>
+            <p>Add, edit, or remove new construction projects for the public website.</p>
+          </a>
 
-        <section class="table-card">
+          <a href="settings.html" class="broker-action-card">
+            <span>04</span>
+            <strong>Portal Settings</strong>
+            <p>Review secure portal controls and account management settings.</p>
+          </a>
+        </section>
+
+        <section class="table-card broker-guide-card">
           <div class="table-heading">
-            <h3>Portal Status</h3>
-            <span>Ready for backend plug-in</span>
+            <h3>Broker of Record Guide</h3>
+            <span>How to manage the portal</span>
           </div>
 
-          <div class="activity-list">
+          <div class="broker-guide-list">
             <div>
-              <strong>Supabase Auth</strong>
-              <p>Ready to replace frontend login with secure authentication.</p>
+              <span>1</span>
+              <p><strong>Review requests.</strong> Open Agent Approvals to see pending access requests from agents who submitted the request form.</p>
             </div>
 
             <div>
-              <strong>Agent Profiles</strong>
-              <p>Ready to connect profile forms to the Supabase database and Storage.</p>
+              <span>2</span>
+              <p><strong>Approve or reject.</strong> Approved agents can log into the portal. Rejected requests stay blocked from portal access.</p>
             </div>
 
             <div>
-              <strong>Broker Controls</strong>
-              <p>Ready for approval, profile management, and new construction tools.</p>
+              <span>3</span>
+              <p><strong>Manage active agents.</strong> Use the Agents page to view active accounts. Deleting an agent disables their login and removes their public profile.</p>
+            </div>
+
+            <div>
+              <span>4</span>
+              <p><strong>Control website content.</strong> Use New Construction to manage projects that will appear on the main Pinnacle Realty website.</p>
             </div>
           </div>
         </section>

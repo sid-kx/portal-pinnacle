@@ -152,6 +152,7 @@ img {
   backdrop-filter: blur(28px);
 }
 
+
 .login-card::before {
   content: "";
   position: absolute;
@@ -161,6 +162,39 @@ img {
   background:
     radial-gradient(circle at 25% 15%, rgba(244, 223, 139, 0.18), transparent 28%),
     radial-gradient(circle at 86% 86%, rgba(212, 175, 55, 0.12), transparent 34%);
+}
+
+.request-close-btn {
+  position: absolute;
+  top: 22px;
+  left: 22px;
+  z-index: 3;
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  color: var(--text);
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 1.55rem;
+  line-height: 1;
+  font-weight: 650;
+  transition:
+    transform 0.22s ease,
+    background 0.22s ease,
+    border-color 0.22s ease,
+    color 0.22s ease,
+    box-shadow 0.22s ease;
+}
+
+.request-close-btn:hover {
+  transform: translateY(-2px);
+  color: var(--gold-light);
+  border-color: var(--border-gold);
+  background: rgba(212, 175, 55, 0.08);
+  box-shadow: 0 16px 34px rgba(212, 175, 55, 0.12);
 }
 
 .single-card {
@@ -619,8 +653,10 @@ a.ghost-btn {
 .profile-pill {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 9px 12px;
+  gap: 14px;
+  min-width: 285px;
+  max-width: 360px;
+  padding: 10px 22px 10px 12px;
   border: 1px solid var(--border);
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.055);
@@ -660,12 +696,22 @@ a.ghost-btn {
 .profile-pill strong,
 .profile-pill span {
   display: block;
+  white-space: nowrap;
+}
+
+.profile-pill strong {
+  font-size: 1rem;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .profile-pill span {
   margin-top: 2px;
   color: var(--muted);
   font-size: 0.78rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .content-area {
@@ -1063,6 +1109,126 @@ tr:last-child td {
   padding: 28px;
 }
 
+
+
+.broker-action-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 20px;
+  margin-top: 24px;
+}
+
+.broker-action-card {
+  position: relative;
+  min-height: 210px;
+  padding: 26px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.068), rgba(255, 255, 255, 0.026)),
+    rgba(15, 15, 17, 0.8);
+  backdrop-filter: blur(22px);
+  box-shadow: 0 22px 65px rgba(0, 0, 0, 0.24);
+  transition:
+    transform 0.22s ease,
+    border-color 0.22s ease,
+    box-shadow 0.22s ease,
+    background 0.22s ease;
+}
+
+.broker-action-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 100% 0%, rgba(212, 175, 55, 0.12), transparent 34%);
+  pointer-events: none;
+}
+
+.broker-action-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--border-gold);
+  box-shadow: 0 26px 72px rgba(0, 0, 0, 0.3);
+}
+
+.broker-action-card span,
+.broker-action-card strong,
+.broker-action-card p {
+  position: relative;
+  z-index: 1;
+}
+
+.broker-action-card span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  margin-bottom: 22px;
+  border-radius: 14px;
+  color: #100d04;
+  background: linear-gradient(135deg, var(--gold-light), var(--gold), var(--gold-dark));
+  font-size: 0.82rem;
+  font-weight: 950;
+  box-shadow: 0 14px 32px rgba(212, 175, 55, 0.18);
+}
+
+.broker-action-card strong {
+  display: block;
+  margin-bottom: 10px;
+  color: var(--text);
+  font-size: 1.18rem;
+  letter-spacing: -0.03em;
+}
+
+.broker-action-card p {
+  color: var(--muted);
+  line-height: 1.72;
+  font-size: 0.95rem;
+}
+
+.broker-guide-card {
+  margin-top: 24px;
+}
+
+.broker-guide-list {
+  display: grid;
+  gap: 16px;
+}
+
+.broker-guide-list div {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 16px;
+  align-items: flex-start;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.broker-guide-list span {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  color: #100d04;
+  background: var(--gold-light);
+  font-size: 0.82rem;
+  font-weight: 950;
+}
+
+.broker-guide-list p {
+  color: var(--muted);
+  line-height: 1.72;
+}
+
+.broker-guide-list strong {
+  color: var(--text);
+}
+
 /* CARDS */
 
 .cards-grid,
@@ -1134,6 +1300,10 @@ tr:last-child td {
   .settings-grid {
     grid-template-columns: 1fr;
   }
+
+  .broker-action-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 860px) {
@@ -1179,7 +1349,8 @@ tr:last-child td {
   .settings-grid,
   .stats-grid,
   .broker-stats,
-  .cards-grid {
+  .cards-grid,
+  .broker-action-grid {
     grid-template-columns: 1fr;
   }
 
@@ -1205,6 +1376,14 @@ tr:last-child td {
   .login-card {
     min-height: auto;
     border-radius: 28px;
+  }
+
+  .request-close-btn {
+    top: 14px;
+    left: 14px;
+    width: 38px;
+    height: 38px;
+    font-size: 1.35rem;
   }
 
   .brand-area {
@@ -1270,6 +1449,17 @@ tr:last-child td {
   .preview-card,
   .table-card {
     padding: 24px;
+  }
+
+  .broker-action-card {
+    min-height: auto;
+    padding: 22px;
+    border-radius: 21px;
+  }
+
+  .broker-guide-list div {
+    grid-template-columns: 1fr;
+    padding: 18px;
   }
 
   .stat-card,
