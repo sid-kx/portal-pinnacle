@@ -226,21 +226,21 @@ function setupRequestAccess() {
     return;
   }
 
-  requestAccessForm.addEventListener("submit", (event) => {
+  requestAccessForm.addEventListener("submit", async (event) => {
     event.preventDefault();
 
-    const formData = new FormData(requestAccessForm);
-    const requestPayload = {
-      full_name: formData.get("full_name")?.trim(),
-      email: formData.get("email")?.trim().toLowerCase(),
-      phone: formData.get("phone")?.trim(),
-      license_number: formData.get("license_number")?.trim(),
-      role: formData.get("role") || "agent",
-      status: formData.get("status") || "pending",
-      is_public: formData.get("is_public") === "true",
-      requested_at: new Date().toISOString(),
-    };
+    if (!hasSupabase()) {
+      requestMessage.textContent = "Supabase is not connected.";
+      requestMessage.classList.add("error");
+      requestMessage.classList.remove("success");
+      return;
+    }
 
+    const formData = new FormData(requestAccessForm);
+    const fullName = formData.get("full_name")?.trim();
+    const email = formData.get("email")?.trim().toLowerCase();
+    const phone = formData.get("phone")?.trim();
+    const licenseNumber = formData.get("license_number")?.trim();
     const password = formData.get("password") || "";
 
     if (password.length < 8) {
@@ -250,10 +250,52 @@ function setupRequestAccess() {
       return;
     }
 
-    console.log("Ready to submit access request to Supabase:", requestPayload);
+    requestMessage.textContent = "Submitting access request...";
+    requestMessage.classList.remove("error", "success");
+
+    const { data: signUpData, error: signUpError } = await supabaseClient.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          full_name: fullName,
+          role: "agent",
+        },
+      },
+    });
+
+    if (signUpError) {
+      requestMessage.textContent = signUpError.message;
+      requestMessage.classList.add("error");
+      requestMessage.classList.remove("success");
+      return;
+    }
+
+    const authUserId = signUpData.user?.id || null;
+
+    const { error: requestError } = await supabaseClient
+      .from("access_requests")
+      .insert({
+        full_name: fullName,
+        email,
+        phone,
+        license_number: licenseNumber || null,
+        role: "agent",
+        status: "pending",
+        requested_auth_user_id: authUserId,
+      });
+
+    if (requestError) {
+      requestMessage.textContent = requestError.message;
+      requestMessage.classList.add("error");
+      requestMessage.classList.remove("success");
+      return;
+    }
+
+    await supabaseClient.auth.signOut();
 
     requestMessage.textContent =
-      "Access request prepared. Supabase will save this as a pending request for broker approval.";
+      "Access request submitted. Jag Saini will review and approve your account before you can log in.";
     requestMessage.classList.remove("error");
     requestMessage.classList.add("success");
 
@@ -348,63 +390,179 @@ function setupProfileForm() {
   });
 }
 
-function setupDeactivateAgentButtons() {
-  const deactivateButtons = document.querySelectorAll("[data-deactivate-agent]");
+async function loadAgentsForBroker() {
+  const agentsGrid = document.getElementById("agentsGrid");
 
-  if (!deactivateButtons.length) {
+  if (!agentsGrid || !hasSupabase()) {
     return;
   }
 
-  deactivateButtons.forEach((button) => {
-    button.addEventListener("click", () => {
-      const session = getSession();
-      const agentId = button.dataset.deactivateAgent;
-      const agentCard = button.closest("[data-agent-id]");
+  const { data, error } = await supabaseClient
+    .from("portal_users")
+    .select("id, full_name, email, role, account_status, is_permanent_admin, created_at")
+    .order("created_at", { ascending: true });
 
-      if (!session || session.role !== "broker") {
-        alert("Only the Broker of Record can delete agent profiles.");
-        return;
+  if (error) {
+    console.error("Could not load agents:", error);
+    return;
+  }
+
+  agentsGrid.innerHTML = "";
+
+  data.forEach((agent) => {
+    const initials = agent.full_name
+      .split(" ")
+      .map((part) => part[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase();
+
+    const isActive = agent.account_status === "active";
+    const isAdmin = agent.is_permanent_admin === true;
+
+    const card = document.createElement("article");
+    card.className = "mini-agent-card";
+    card.dataset.agentId = agent.id;
+    card.dataset.agentRole = agent.role;
+    card.dataset.publicProfile = isActive ? "true" : "false";
+
+    card.innerHTML = `
+      <div class="mini-avatar">${initials}</div>
+      <h3>${agent.full_name}</h3>
+      <p>${agent.role === "broker" ? "Broker of Record" : "Agent Account"}</p>
+      <span class="status ${isActive ? "active" : "pending"}">
+        ${isActive ? "Active" : "Inactive"}
+      </span>
+
+      <div class="agent-secure-info">
+        <span>Email</span>
+        <strong>${agent.email}</strong>
+      </div>
+
+      <div class="agent-secure-info">
+        <span>Public Profile</span>
+        <strong>${isActive ? "Visible" : "Hidden"}</strong>
+      </div>
+
+      ${
+        isAdmin
+          ? `<button class="danger-btn" type="button" disabled title="Jag Saini's admin account cannot be deleted">
+              Permanent Admin Account
+            </button>`
+          : `<button class="danger-btn" type="button" data-deactivate-agent="${agent.id}">
+              Delete Profile
+            </button>`
       }
+    `;
 
-      const confirmed = confirm(
-        "Are you sure you want to delete this agent profile? Once Supabase is connected, this will disable their portal access and remove them from the public website."
-      );
+    agentsGrid.appendChild(card);
+  });
+}
 
-      if (!confirmed) {
-        return;
-      }
+function setupDeactivateAgentButtons() {
+  const agentsGrid = document.getElementById("agentsGrid");
 
-      const deactivatePayload = {
-        agent_id: agentId,
-        account_status: "disabled",
-        profile_status: "inactive",
-        is_public: false,
-        deactivated_by: session.email,
-        deactivated_at: new Date().toISOString(),
-      };
+  if (!agentsGrid) {
+    return;
+  }
 
-      console.log("Ready to deactivate agent in Supabase:", deactivatePayload);
+  loadAgentsForBroker();
 
-      if (agentCard) {
-        agentCard.dataset.publicProfile = "false";
-        const statusBadge = agentCard.querySelector(".status");
-        const publicStatus = agentCard.querySelector(".agent-secure-info:last-of-type strong");
+  agentsGrid.addEventListener("click", async (event) => {
+    const button = event.target.closest("[data-deactivate-agent]");
 
-        if (statusBadge) {
-          statusBadge.textContent = "Inactive";
-          statusBadge.classList.remove("active");
-          statusBadge.classList.add("pending");
-        }
+    if (!button) {
+      return;
+    }
 
-        if (publicStatus) {
-          publicStatus.textContent = "Hidden";
-        }
-      }
+    const session = getSession();
+    const agentId = button.dataset.deactivateAgent;
 
-      alert(
-        "Delete profile action is ready. Supabase will deactivate this account and remove it from the public website next."
-      );
+    if (!session || session.role !== "broker") {
+      alert("Only Jag Saini can delete agent profiles.");
+      return;
+    }
+
+    const confirmed = confirm(
+      "Are you sure you want to delete this agent profile? This will disable portal access and remove the agent from the public website later."
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    const { error } = await supabaseClient.rpc("disable_agent", {
+      agent_portal_user_id: agentId,
     });
+
+    if (error) {
+      alert(error.message);
+      console.error("Disable agent error:", error);
+      return;
+    }
+
+    alert("Agent profile deleted/disabled successfully.");
+    await loadAgentsForBroker();
+  });
+}
+
+async function loadAgentApprovals() {
+  if (!agentApprovalsTableBody || !hasSupabase()) {
+    return;
+  }
+
+  const { data, error } = await supabaseClient
+    .from("access_requests")
+    .select("id, full_name, email, phone, license_number, status, requested_auth_user_id, created_at")
+    .eq("status", "pending")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Could not load agent approvals:", error);
+    return;
+  }
+
+  const emptyRow = agentApprovalsEmptyState;
+  agentApprovalsTableBody.innerHTML = "";
+
+  if (!data.length) {
+    if (emptyRow) {
+      agentApprovalsTableBody.appendChild(emptyRow);
+      emptyRow.hidden = false;
+    }
+
+    return;
+  }
+
+  data.forEach((request) => {
+    const row = document.createElement("tr");
+    row.dataset.requestId = request.id;
+    row.dataset.authUserId = request.requested_auth_user_id || "";
+
+    const date = request.created_at
+      ? new Date(request.created_at).toLocaleDateString()
+      : "Pending";
+
+    row.innerHTML = `
+      <td>${request.full_name}</td>
+      <td>${request.email}</td>
+      <td>${request.phone || "Not provided"}</td>
+      <td>${request.license_number || "Not provided"}</td>
+      <td>${date}</td>
+      <td><span class="status pending">Pending</span></td>
+      <td>
+        <div class="table-actions">
+          <button class="small-btn approve" type="button" data-approve-agent="${request.id}">
+            Approve
+          </button>
+          <button class="small-btn reject" type="button" data-reject-agent="${request.id}">
+            Reject
+          </button>
+        </div>
+      </td>
+    `;
+
+    agentApprovalsTableBody.appendChild(row);
   });
 }
 
@@ -413,7 +571,9 @@ function setupAgentApprovalActions() {
     return;
   }
 
-  agentApprovalsTableBody.addEventListener("click", (event) => {
+  loadAgentApprovals();
+
+  agentApprovalsTableBody.addEventListener("click", async (event) => {
     const approveButton = event.target.closest("[data-approve-agent]");
     const rejectButton = event.target.closest("[data-reject-agent]");
 
@@ -424,14 +584,17 @@ function setupAgentApprovalActions() {
     const session = getSession();
 
     if (!session || session.role !== "broker") {
-      alert("Only the Broker of Record can manage agent approvals.");
+      alert("Only Jag Saini can manage agent approvals.");
       return;
     }
 
-    const action = approveButton ? "approved" : "rejected";
+    const row = event.target.closest("tr");
     const requestId = approveButton
       ? approveButton.dataset.approveAgent
       : rejectButton.dataset.rejectAgent;
+
+    const requestedAuthUserId = row?.dataset.authUserId || null;
+    const action = approveButton ? "approved" : "rejected";
 
     const confirmed = confirm(
       action === "approved"
@@ -443,35 +606,36 @@ function setupAgentApprovalActions() {
       return;
     }
 
-    const approvalPayload = {
-      request_id: requestId,
-      status: action,
-      approved_by: action === "approved" ? session.email : null,
-      rejected_by: action === "rejected" ? session.email : null,
-      reviewed_at: new Date().toISOString(),
-      is_public: action === "approved",
-      account_status: action === "approved" ? "active" : "rejected",
-    };
+    if (action === "approved") {
+      const { error } = await supabaseClient.rpc("approve_access_request", {
+        request_id: requestId,
+        agent_auth_user_id: requestedAuthUserId,
+      });
 
-    console.log("Ready to update agent request in Supabase:", approvalPayload);
+      if (error) {
+        alert(error.message);
+        console.error("Approval error:", error);
+        return;
+      }
 
-    const row = event.target.closest("tr");
-
-    if (row) {
-      row.remove();
+      alert("Agent approved. They can now log into the portal.");
     }
 
-    const hasPendingRows = agentApprovalsTableBody.querySelector("tr[data-request-id]");
+    if (action === "rejected") {
+      const { error } = await supabaseClient.rpc("reject_access_request", {
+        request_id: requestId,
+      });
 
-    if (!hasPendingRows && agentApprovalsEmptyState) {
-      agentApprovalsEmptyState.hidden = false;
+      if (error) {
+        alert(error.message);
+        console.error("Rejection error:", error);
+        return;
+      }
+
+      alert("Agent request rejected.");
     }
 
-    alert(
-      action === "approved"
-        ? "Approval action is ready. Supabase will activate this agent and publish their profile next."
-        : "Rejection action is ready. Supabase will keep this request rejected and block access next."
-    );
+    await loadAgentApprovals();
   });
 }
 
