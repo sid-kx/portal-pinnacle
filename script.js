@@ -369,6 +369,38 @@ function setupPasswordToggles() {
   });
 }
 
+function updateProfileImagePreview(imageUrl, fullName = "Agent") {
+  if (!imageUrl || !profileForm) {
+    return;
+  }
+
+  const previewElement =
+    document.getElementById("profileImagePreview") ||
+    document.getElementById("profilePreview") ||
+    document.getElementById("profileAvatar") ||
+    document.querySelector(".profile-image-preview") ||
+    document.querySelector(".profile-preview") ||
+    document.querySelector(".profile-avatar") ||
+    document.querySelector(".image-preview");
+
+  if (!previewElement) {
+    return;
+  }
+
+  const altText = `${fullName} profile photo`;
+
+  if (previewElement.tagName === "IMG") {
+    previewElement.src = imageUrl;
+    previewElement.alt = altText;
+    previewElement.hidden = false;
+    return;
+  }
+
+  previewElement.innerHTML = `<img src="${imageUrl}" alt="${altText}" loading="lazy" decoding="async" />`;
+  previewElement.classList.add("has-image");
+  previewElement.hidden = false;
+}
+
 // Loads the agent profile from Supabase and populates the form fields
 async function loadAgentProfile() {
   if (!profileForm || !hasSupabase()) {
@@ -416,11 +448,8 @@ async function loadAgentProfile() {
     publicStatus.value = String(data?.is_public ?? true);
   }
 
-  const imagePreview = document.getElementById("profileImagePreview");
-  if (imagePreview && data?.profile_image_url) {
-    imagePreview.src = data.profile_image_url;
-    imagePreview.alt = `${data.full_name || portalUser.full_name || "Agent"} profile photo`;
-    imagePreview.hidden = false;
+  if (data?.profile_image_url) {
+    updateProfileImagePreview(data.profile_image_url, data.full_name || portalUser.full_name || "Agent");
   }
 }
 
@@ -476,6 +505,25 @@ function setupProfileForm() {
   }
 
   loadAgentProfile();
+
+  const imageInput =
+    profileForm.querySelector('[name="profile_image"]') ||
+    profileForm.querySelector('[name="profileImage"]') ||
+    profileForm.querySelector('#profileImage') ||
+    profileForm.querySelector('#profile_image');
+
+  if (imageInput) {
+    imageInput.addEventListener("change", () => {
+      const selectedImage = imageInput.files?.[0];
+      if (!selectedImage) {
+        return;
+      }
+
+      const localPreviewUrl = URL.createObjectURL(selectedImage);
+      const currentName = profileForm.querySelector('[name="full_name"]')?.value?.trim() || "Agent";
+      updateProfileImagePreview(localPreviewUrl, currentName);
+    });
+  }
 
   profileForm.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -563,11 +611,8 @@ function setupProfileForm() {
     profileMessage.classList.remove("error");
     profileMessage.classList.add("success");
 
-    const imagePreview = document.getElementById("profileImagePreview");
-    if (imagePreview && profileImageUrl) {
-      imagePreview.src = profileImageUrl;
-      imagePreview.alt = `${fullName} profile photo`;
-      imagePreview.hidden = false;
+    if (profileImageUrl) {
+      updateProfileImagePreview(profileImageUrl, fullName);
     }
   });
 }
