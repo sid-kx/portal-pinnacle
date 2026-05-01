@@ -21,6 +21,12 @@ const addProjectBtn = document.getElementById("addProjectBtn");
 const cancelProjectBtn = document.getElementById("cancelProjectBtn");
 const resetProjectBtn = document.getElementById("resetProjectBtn");
 
+let cachedPortalUser = null;
+let cachedAgentProfile = null;
+let cachedAuthUser = null;
+let portalUserPromise = null;
+let agentProfilePromise = null;
+
 function hasSupabase() {
   return typeof supabaseClient !== "undefined" && supabaseClient;
 }
@@ -56,17 +62,32 @@ async function getPortalUserByAuthId(authUserId) {
 
 // Helper to get the current portal user, using Supabase if available, otherwise falling back to local session
 async function getCurrentPortalUser() {
+  if (cachedPortalUser) {
+    return cachedPortalUser;
+  }
+
+  if (portalUserPromise) {
+    return portalUserPromise;
+  }
+
   if (!hasSupabase()) {
-    return getSession();
+    cachedPortalUser = getSession();
+    return cachedPortalUser;
   }
 
-  const { data: authData, error: authError } = await supabaseClient.auth.getUser();
+  portalUserPromise = (async () => {
+    const { data: authData, error: authError } = await supabaseClient.auth.getUser();
 
-  if (authError || !authData.user) {
-    return null;
-  }
+    if (authError || !authData.user) {
+      return null;
+    }
 
-  return getPortalUserByAuthId(authData.user.id);
+    cachedAuthUser = authData.user;
+    cachedPortalUser = await getPortalUserByAuthId(authData.user.id);
+    return cachedPortalUser;
+  })();
+
+  return portalUserPromise;
 }
 
 function getBasePath() {
@@ -144,7 +165,10 @@ async function protectPage() {
     return;
   }
 
+  cachedAuthUser = authData.user;
   const portalUser = await getPortalUserByAuthId(authData.user.id);
+  cachedPortalUser = portalUser;
+  portalUserPromise = Promise.resolve(portalUser);
 
   if (!portalUser || portalUser.account_status !== "active") {
     localStorage.removeItem("pinnaclePortalUser");
@@ -404,21 +428,7 @@ async function setupAgentIdentityUI() {
     return;
   }
 
-  let profile = null;
-
-  if (hasSupabase()) {
-    const { data, error } = await supabaseClient
-      .from("agent_profiles")
-      .select("full_name, bio, profile_image_url")
-      .eq("auth_user_id", portalUser.auth_user_id)
-      .maybeSingle();
-
-    if (error) {
-      console.error("Could not load agent identity:", error);
-    } else {
-      profile = data;
-    }
-  }
+  const profile = await getCurrentAgentProfile();
 
   const displayName = profile?.full_name || portalUser.full_name || portalUser.name || "Agent";
   const displayBio = profile?.bio || "Complete your profile to preview how your public information will appear.";
@@ -456,6 +466,41 @@ async function setupAgentIdentityUI() {
 }
 
 // Loads the agent profile from Supabase and populates the form fields
+async function getCurrentAgentProfile() {
+  if (cachedAgentProfile) {
+    return cachedAgentProfile;
+  }
+
+  if (agentProfilePromise) {
+    return agentProfilePromise;
+  }
+
+  const portalUser = await getCurrentPortalUser();
+
+  if (!portalUser || !hasSupabase()) {
+    return null;
+  }
+
+  agentProfilePromise = (async () => {
+    const { data, error } = await supabaseClient
+      .from("agent_profiles")
+      .select("full_name, email, direct_phone, office_phone, bio, profile_image_url, instagram_url, facebook_url, linkedin_url, twitter_url, youtube_url, profile_status, is_public")
+      .eq("auth_user_id", portalUser.auth_user_id)
+      .maybeSingle();
+
+    if (error) {
+      console.error("Could not load agent profile:", error);
+      return null;
+    }
+
+    cachedAgentProfile = data;
+    return cachedAgentProfile;
+  })();
+
+  return agentProfilePromise;
+}
+
+// Loads the agent profile from Supabase and populates the form fields
 async function loadAgentProfile() {
   if (!profileForm || !hasSupabase()) {
     return;
@@ -466,17 +511,7 @@ async function loadAgentProfile() {
   if (!portalUser) {
     return;
   }
-
-  const { data, error } = await supabaseClient
-    .from("agent_profiles")
-    .select("full_name, email, direct_phone, office_phone, bio, profile_image_url, instagram_url, facebook_url, linkedin_url, twitter_url, youtube_url, profile_status, is_public")
-    .eq("auth_user_id", portalUser.auth_user_id)
-    .maybeSingle();
-
-  if (error) {
-    console.error("Could not load agent profile:", error);
-    return;
-  }
+  const data = await getCurrentAgentProfile();
 
   const setValue = (selector, value) => {
     const field = profileForm.querySelector(selector);
@@ -667,6 +702,13 @@ function setupProfileForm() {
     profileMessage.classList.remove("error");
     profileMessage.classList.add("success");
 
+    cachedAgentProfile = {
+      ...(cachedAgentProfile || {}),
+      ...profilePayload,
+      profile_image_url: profileImageUrl || cachedAgentProfile?.profile_image_url,
+    };
+    agentProfilePromise = Promise.resolve(cachedAgentProfile);
+
     if (profileImageUrl) {
       updateProfileImagePreview(profileImageUrl, fullName);
     }
@@ -705,6 +747,8 @@ async function loadAgentsForBroker() {
   }
 
   agentsGrid.innerHTML = "";
+
+  const fragment = document.createDocumentFragment();
 
   data.forEach((agent) => {
     const initials = agent.full_name
@@ -752,8 +796,10 @@ async function loadAgentsForBroker() {
       }
     `;
 
-    agentsGrid.appendChild(card);
+    fragment.appendChild(card);
   });
+
+  agentsGrid.appendChild(fragment);
 }
 
 function setupDeactivateAgentButtons() {
@@ -831,6 +877,8 @@ async function loadAgentApprovals() {
     return;
   }
 
+  const fragment = document.createDocumentFragment();
+
   data.forEach((request) => {
     const row = document.createElement("tr");
     row.dataset.requestId = request.id;
@@ -859,8 +907,10 @@ async function loadAgentApprovals() {
       </td>
     `;
 
-    agentApprovalsTableBody.appendChild(row);
+    fragment.appendChild(row);
   });
+
+  agentApprovalsTableBody.appendChild(fragment);
 }
 
 function setupAgentApprovalActions() {
