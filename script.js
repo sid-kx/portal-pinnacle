@@ -20,6 +20,8 @@ const projectMessage = document.getElementById("projectMessage");
 const addProjectBtn = document.getElementById("addProjectBtn");
 const cancelProjectBtn = document.getElementById("cancelProjectBtn");
 const resetProjectBtn = document.getElementById("resetProjectBtn");
+const newConstructionTableBody = document.getElementById("newConstructionTableBody");
+const newConstructionEmptyState = document.getElementById("newConstructionEmptyState");
 
 let cachedPortalUser = null;
 let cachedAgentProfile = null;
@@ -986,7 +988,131 @@ function setupAgentApprovalActions() {
   });
 }
 
+async function uploadNewConstructionImage() {
+  const imageInput = newConstructionForm?.querySelector('[name="project_image"]');
+  const imageFile = imageInput?.files?.[0];
+
+  if (!imageFile) {
+    return null;
+  }
+
+  const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+
+  if (!allowedTypes.includes(imageFile.type)) {
+    throw new Error("Project image must be a JPG, PNG, or WEBP file.");
+  }
+
+  const maxSize = 5 * 1024 * 1024;
+
+  if (imageFile.size > maxSize) {
+    throw new Error("Project image must be smaller than 5 MB.");
+  }
+
+  const extension = imageFile.name.split(".").pop()?.toLowerCase() || "jpg";
+  const filePath = `projects/project-${Date.now()}.${extension}`;
+
+  const { error: uploadError } = await supabaseClient.storage
+    .from("new-construction-images")
+    .upload(filePath, imageFile, {
+      cacheControl: "3600",
+      upsert: true,
+    });
+
+  if (uploadError) {
+    throw uploadError;
+  }
+
+  const { data } = supabaseClient.storage
+    .from("new-construction-images")
+    .getPublicUrl(filePath);
+
+  return data.publicUrl;
+}
+
+function getProjectStatusClass(status) {
+  const normalizedStatus = (status || "").toLowerCase();
+
+  if (normalizedStatus.includes("selling")) {
+    return "active";
+  }
+
+  if (normalizedStatus.includes("sold")) {
+    return "rejected";
+  }
+
+  return "pending";
+}
+
+function setProjectMessage(message, type = "success") {
+  if (!projectMessage) {
+    return;
+  }
+
+  projectMessage.textContent = message;
+  projectMessage.classList.remove("error", "success");
+  projectMessage.classList.add(type);
+}
+
+async function loadNewConstructionProjects() {
+  if (!newConstructionTableBody || !hasSupabase()) {
+    return;
+  }
+
+  const { data, error } = await supabaseClient
+    .from("new_construction_projects")
+    .select("id, project_name, location, starting_price, status, is_public, created_at")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Could not load new construction projects:", error);
+    return;
+  }
+
+  newConstructionTableBody.innerHTML = "";
+
+  if (!data.length) {
+    if (newConstructionEmptyState) {
+      newConstructionEmptyState.hidden = false;
+      newConstructionTableBody.appendChild(newConstructionEmptyState);
+    }
+
+    return;
+  }
+
+  const fragment = document.createDocumentFragment();
+
+  data.forEach((project) => {
+    const row = document.createElement("tr");
+    row.dataset.projectId = project.id;
+
+    row.innerHTML = `
+      <td>${project.project_name || "Untitled Project"}</td>
+      <td>${project.location || "Not provided"}</td>
+      <td>${project.starting_price || "Not provided"}</td>
+      <td><span class="status ${getProjectStatusClass(project.status)}">${project.status || "Coming Soon"}</span></td>
+      <td>
+        <div class="table-actions">
+          <span class="status ${project.is_public ? "active" : "pending"}">
+            ${project.is_public ? "Public" : "Hidden"}
+          </span>
+          <button class="small-btn reject" type="button" data-delete-project="${project.id}">
+            Delete
+          </button>
+        </div>
+      </td>
+    `;
+
+    fragment.appendChild(row);
+  });
+
+  newConstructionTableBody.appendChild(fragment);
+}
+
 function setupNewConstructionTools() {
+  if (newConstructionTableBody) {
+    loadNewConstructionProjects();
+  }
+
   if (addProjectBtn && projectFormCard) {
     addProjectBtn.addEventListener("click", () => {
       projectFormCard.hidden = false;
@@ -1003,58 +1129,128 @@ function setupNewConstructionTools() {
   if (resetProjectBtn && newConstructionForm) {
     resetProjectBtn.addEventListener("click", () => {
       newConstructionForm.reset();
-    });
-  }
-
-  if (newConstructionForm) {
-    newConstructionForm.addEventListener("submit", (event) => {
-      event.preventDefault();
-
-      const session = getSession();
-      const formData = new FormData(newConstructionForm);
-      const projectPayload = {
-        project_name: formData.get("project_name")?.trim(),
-        location: formData.get("location")?.trim(),
-        starting_price: formData.get("starting_price")?.trim(),
-        status: formData.get("status"),
-        description: formData.get("description")?.trim(),
-        is_public: formData.get("is_public") === "true",
-        created_by: session?.email,
-        updated_at: new Date().toISOString(),
-      };
-
-      console.log("Ready to save new construction project to Supabase:", projectPayload);
-
       if (projectMessage) {
-        projectMessage.textContent =
-          "Project prepared. Supabase database and Storage will save this listing next.";
-        projectMessage.classList.remove("error");
-        projectMessage.classList.add("success");
+        projectMessage.textContent = "";
+        projectMessage.classList.remove("error", "success");
       }
     });
   }
 
-  document.querySelectorAll("[data-edit-project]").forEach((button) => {
-    button.addEventListener("click", () => {
-      console.log("Ready to load project for editing from Supabase:", button.dataset.editProject);
-      alert("Edit project action is ready for Supabase.");
-    });
-  });
+  if (newConstructionForm) {
+    newConstructionForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
 
-  document.querySelectorAll("[data-delete-project]").forEach((button) => {
-    button.addEventListener("click", () => {
+      if (!hasSupabase()) {
+        setProjectMessage("Supabase is not connected.", "error");
+        return;
+      }
+
+      const portalUser = await getCurrentPortalUser();
+
+      if (!portalUser || portalUser.role !== "broker") {
+        setProjectMessage("Only Jag Saini can save new construction projects.", "error");
+        return;
+      }
+
+      const formData = new FormData(newConstructionForm);
+      const projectName = formData.get("project_name")?.trim();
+      const location = formData.get("location")?.trim();
+
+      if (!projectName || !location) {
+        setProjectMessage("Project name and location are required.", "error");
+        return;
+      }
+
+      const projectPayload = {
+        project_name: projectName,
+        location,
+        starting_price: formData.get("starting_price")?.trim() || null,
+        status: formData.get("status") || "Coming Soon",
+        description: formData.get("description")?.trim() || null,
+        is_public: formData.get("is_public") === "true",
+        created_by: portalUser.id,
+        created_by_email: portalUser.email,
+        updated_at: new Date().toISOString(),
+      };
+
+      setProjectMessage("Saving project...", "success");
+
+      try {
+        const imageUrl = await uploadNewConstructionImage();
+
+        if (imageUrl) {
+          projectPayload.image_url = imageUrl;
+        }
+      } catch (imageError) {
+        setProjectMessage(imageError.message || "Project image upload failed.", "error");
+        console.error("New construction image upload error:", imageError);
+        return;
+      }
+
+      const { error } = await supabaseClient
+        .from("new_construction_projects")
+        .insert(projectPayload);
+
+      if (error) {
+        setProjectMessage(error.message, "error");
+        console.error("New construction save error:", error);
+        return;
+      }
+
+      setProjectMessage(
+        projectPayload.is_public
+          ? "Project saved and published to the public website."
+          : "Project saved and hidden from the public website.",
+        "success"
+      );
+
+      newConstructionForm.reset();
+      await loadNewConstructionProjects();
+    });
+  }
+
+  if (newConstructionTableBody) {
+    newConstructionTableBody.addEventListener("click", async (event) => {
+      const deleteButton = event.target.closest("[data-delete-project]");
+
+      if (!deleteButton) {
+        return;
+      }
+
+      if (!hasSupabase()) {
+        alert("Supabase is not connected.");
+        return;
+      }
+
+      const portalUser = await getCurrentPortalUser();
+
+      if (!portalUser || portalUser.role !== "broker") {
+        alert("Only Jag Saini can delete new construction projects.");
+        return;
+      }
+
       const confirmed = confirm(
-        "Delete this new construction project? Once Supabase is connected, this will remove it from the public website."
+        "Delete this new construction project? This will remove it from the portal and public website."
       );
 
       if (!confirmed) {
         return;
       }
 
-      console.log("Ready to delete project from Supabase:", button.dataset.deleteProject);
-      alert("Delete project action is ready for Supabase.");
+      const { error } = await supabaseClient
+        .from("new_construction_projects")
+        .delete()
+        .eq("id", deleteButton.dataset.deleteProject);
+
+      if (error) {
+        alert(error.message);
+        console.error("New construction delete error:", error);
+        return;
+      }
+
+      await loadNewConstructionProjects();
     });
-  });
+  }
 }
 
 function setupSettingsPage() {
