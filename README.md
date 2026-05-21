@@ -1,167 +1,227 @@
-# Pinnacle Realty Website
+# Pinnacle Realty Portal
 
-Official public marketing website for **Pinnacle Realty, Brokerage** at **pinnaclerealty.ca**.
+Private agent and broker dashboard for **Pinnacle Realty, Brokerage** at **agentsso.pinnaclerealty.ca**.
 
-This repo contains the main client-facing web platform for Pinnacle Realty. The site is built around a premium black-and-gold brokerage brand, modern real estate presentation, lead generation, agent discovery, and future MLS/listings integration.
+This repo contains the secure internal portal used to manage agent access, agent profiles, approvals, and brokerage-controlled content.
 
 ## Live Site
 
-**Production:** https://pinnaclerealty.ca
+**Production:** https://agentsso.pinnaclerealty.ca
+
+Alternative / planned portal domain:
+
+**portal.pinnaclerealty.ca**
 
 ## Project Overview
 
-Pinnacle Realty’s main website is designed to present the brokerage as a modern, polished, growth-ready real estate brand serving Toronto, Mississauga, and the GTA.
+The Pinnacle Realty Portal is the private dashboard layer of the Pinnacle digital ecosystem.
 
-The site focuses on:
+While the main site is public and the Join site is used for recruitment inquiries, the portal is designed for approved internal users. It gives the brokerage control over who appears publicly, what profile information is shown, and what content can be published to the main site.
 
-- Luxury-inspired real estate branding
-- Buyer and seller education
-- Agent and management profiles
-- Contact and inquiry capture
-- Listing alerts and market update subscriptions
-- New construction project presentation
-- Future MLS/IDX-powered listing search
-- Media, articles, blogs, and digital marketing content
-- A connected ecosystem with the Join Pinnacle site and the private Pinnacle portal
+## Main Purpose
 
-## Key Pages
+The portal exists to support internal brokerage operations, including:
 
-### Home
+- Agent access requests
+- Broker approvals and denials
+- Agent profile management
+- Public agent directory syncing
+- Broker-controlled new construction content
+- Secure internal dashboard access
+- Future brokerage tools and automation
 
-The homepage introduces Pinnacle Realty with a premium GTA-focused hero section, consultation call-to-action, and a future MLS listings preview.
+## User Roles
 
-### About
+### Broker / Admin
 
-The About page explains Pinnacle Realty’s brand direction, client-first approach, modern presentation, and long-term vision as a brokerage platform.
+The broker/admin can:
 
-### Buyers
+- Review agent access requests
+- Approve or deny agents
+- Manage approved agent records
+- Hide, delete, or deactivate agents
+- Control which agents appear on the public Agents page
+- Manage brokerage-controlled content
+- Manage new construction projects
+- Maintain data quality before anything becomes public
 
-The Buyers page explains Pinnacle’s guided buying process, including search strategy, showing guidance, offer strategy, closing support, and future MLS-powered listing tools.
+### Agent
 
-### Sellers
+Approved agents can:
 
-The Sellers page focuses on pricing strategy, home preparation, marketing launch, negotiation support, and the importance of polished property presentation.
+- Log in to the portal
+- Edit their own public profile
+- Add biography information
+- Add contact details
+- Upload or update profile image
+- Add social media links
+- Submit information that can appear on the main site after approval
 
-### Agents
+## Public Site Connection
 
-The Agents page works as an agent directory. It displays approved Pinnacle agent profiles with biographies, contact information, office phone details, social links, and profile popups.
+The portal is connected conceptually and technically to the main Pinnacle Realty website.
 
-The page currently includes Jag Saini as Broker of Record and is designed to expand dynamically as approved agents are added through the portal.
+Agent profiles entered or approved through the portal are intended to sync with the public Agents page on pinnaclerealty.ca.
 
-### Management
+The public Agents page should only display an agent card when the required profile information is available, especially:
 
-The Management page presents the leadership and operations team behind Pinnacle Realty, including:
+- Agent name
+- Biography
+- Approved/active status
+- Public visibility status
 
-- Jag Saini — Broker of Record / Founder & CEO
-- Rupinder Kaur — Transaction Manager
-- Sid Kamboj — Marketing Manager
+Deleted or inactive agents should not appear publicly.
 
-The page includes modal-based profile expansions and a premium leadership layout.
+## Key Features
 
-### Contact
+- Secure login page
+- Private dashboard structure
+- Email and password sign-in
+- Request access link
+- Password help modal
+- Broker-controlled approval workflow
+- Agent profile editing
+- Supabase authentication structure
+- Supabase database integration
+- Supabase storage support for profile images
+- Row Level Security planning
+- Broker/admin-only management sections
+- Main-site sync for approved profiles
+- Brokerage-controlled content management
+- New construction project management
+- Mobile-responsive internal UI
+- Black-and-gold Pinnacle design system
 
-The Contact page captures inquiries from buyers, sellers, and general leads. The form asks for:
+## Current Login Page
 
-- Full name
-- Email address
-- Phone number
-- Buying / selling inquiry type
-- Message
+The public-facing login screen includes:
 
-The page is designed to keep lead submission simple and direct.
+- Pinnacle Realty logo
+- “Agent & Broker Portal” label
+- Welcome message
+- Email address field
+- Password field
+- Sign-in button
+- Forgot password help
+- Request access link
 
-### Listing Alerts
-
-The Listing Alerts page allows users to subscribe to monthly Pinnacle updates, including:
-
-- Featured listings
-- Market updates
-- New construction news
-- Pinnacle insights
-- Blog and article updates
-
-### New Construction
-
-The New Construction page is designed to display broker-controlled development projects. Projects can include details, visibility status, and multiple images. The long-term plan is for projects to be managed from the private portal and displayed publicly when approved.
-
-### Media / Articles
-
-The Media section is designed for articles, blogs, real estate insights, and brand-building content. It connects with the broader content strategy and can link out to the Pinnacle blog platform.
-
-## Features
-
-- Responsive desktop and mobile layout
-- Black, gold, and luxury-inspired brand theme
-- Hero sections with polished imagery
-- Smooth scrolling and modern transitions
-- Mobile navigation with hamburger menu behavior
-- Modal popups for leadership, agents, privacy policy, terms, and articles
-- Background scroll locking while modals are open
-- Agent directory with search/filter behavior
-- Contact inquiry form
-- Listing alerts subscription section
-- Future-ready MLS/IDX listing placeholder
-- New construction project display structure
-- Social media footer icons
-- Cross-links to Join Pinnacle and related subdomains
+The forgot password modal currently instructs users to contact Broker of Record Jag Saini for password help.
 
 ## Tech Stack
 
 - HTML
 - CSS
 - JavaScript
-- Supabase integration planned/used for dynamic brokerage data
-- Resend integration planned/used for email workflows
-- FormSubmit used for simple contact form handling where needed
-- Zapier integrations for lead routing and CRM workflows
-- Static hosting/deployment through modern web hosting platforms
+- Supabase Auth
+- Supabase Database
+- Supabase Row Level Security
+- Supabase Storage
+- Broker/admin approval logic
+- Static frontend deployment
 - GitHub for version control
 
-## Connected Pinnacle Ecosystem
+## Planned / Existing Database Concepts
 
-This repo is part of a larger Pinnacle digital platform:
+The portal is built around tables and policies for:
+
+- Agent profiles
+- Access requests
+- Approved users
+- Admin/broker permissions
+- Public visibility flags
+- Deleted/inactive states
+- New construction projects
+- Project image storage
+- Contact/profile data syncing
+
+## New Construction Management
+
+The portal is planned to allow the broker/admin to create, edit, delete, and publish new construction projects.
+
+Each project can include:
+
+- Project name
+- Location
+- Description
+- Status
+- Visibility toggle
+- Up to 5 images
+- Public display control
+
+Only projects marked as public should appear on the main website.
+
+## Agent Directory Management
+
+The portal supports the long-term agent directory workflow:
+
+1. Agent requests access
+2. Broker reviews request
+3. Broker approves or denies access
+4. Approved agent logs in
+5. Agent completes profile
+6. Broker/admin can review or manage visibility
+7. Public Agents page displays approved complete profiles
+
+## Security Goals
+
+The portal should protect internal brokerage data and prevent unauthorized access.
+
+Important security expectations:
+
+- No public access to private dashboards
+- Supabase RLS policies for user-specific data
+- Admin-only access for approvals and content management
+- Agents can only edit their own profile
+- Deleted/inactive profiles stay hidden from public pages
+- Service role keys must never be exposed in frontend code
+- Public website should only fetch safe public profile data
+
+## Connected Pinnacle Ecosystem
 
 | Platform | Domain | Purpose |
 | --- | --- | --- |
 | Main Website | pinnaclerealty.ca | Public brokerage website |
-| Join Website | join.pinnaclerealty.ca | Realtor recruitment landing page |
-| Portal | agentsso.pinnaclerealty.ca / portal.pinnaclerealty.ca | Private broker and agent dashboard |
-| Blog | blogs.pinnaclerealty.ca | Articles, updates, and agent content |
+| Join Website | join.pinnaclerealty.ca | Recruitment inquiry funnel |
+| Portal | agentsso.pinnaclerealty.ca / portal.pinnaclerealty.ca | Internal agent and broker dashboard |
+| Blog | blogs.pinnaclerealty.ca | Content and article platform |
 
 ## Planned / Future Features
 
-- MLS/IDX listings integration
-- Custom listings search filters
-- Residential and commercial listing categories
-- City, price, and property-type filters
+- Full broker dashboard
+- Agent dashboard
+- Profile image upload
+- More complete new construction CMS
+- Better admin approval screens
+- Email notifications for access requests
+- Resend email integration
+- More advanced RLS policy structure
+- CRM syncing
 - Agent-linked listings
-- More dynamic agent profile syncing from the portal
-- Broker-controlled new construction publishing
-- Monthly listing alert email automation
-- Blog/article feed connection
-- More CRM and lead-routing automation
+- Broker analytics
+- Listing management tools
+- Internal announcements
+- Dashboard performance improvements
 
 ## Project Goals
 
-The main goal of the Pinnacle Realty website is to give the brokerage a high-end digital presence that feels modern, trustworthy, and scalable.
+The portal is meant to turn Pinnacle Realty’s website from a static marketing site into a controlled brokerage platform.
 
-Instead of being a basic static real estate website, the project is built to become a full brokerage platform with public marketing pages, lead capture, dynamic agent profiles, listing integrations, content publishing, and internal portal control.
+Instead of manually editing public agent profiles in code, the portal creates a foundation where approved users and broker-managed content can update the public website in a safer, more scalable way.
 
 ## Brand Direction
 
-The visual identity is based on:
+The portal follows the same Pinnacle design language:
 
-- Premium black and gold styling
-- Clean typography
-- Strong spacing
-- Rounded cards and polished sections
-- Luxury real estate feel
-- Toronto / GTA visual direction
-- Professional but modern brokerage tone
-- Consistent Pinnacle branding across public and internal platforms
+- Black and gold color palette
+- Professional dashboard feel
+- Floating cards and rounded sections
+- Clean login experience
+- Consistent logo placement
+- Smooth responsive layout
+- Premium internal brokerage interface
 
 ## Developer
 
 Built and managed by **Sid Kamboj** as part of the Pinnacle Realty digital platform.
 
-Sid handles website development, UI/UX design, branding implementation, digital marketing structure, and platform expansion for Pinnacle Realty.
+Sid handles frontend development, UI/UX design, Supabase integration, database planning, portal workflows, and deployment structure.
