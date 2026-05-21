@@ -8,10 +8,6 @@ This repo contains the secure internal portal used to manage agent access, agent
 
 **Production:** https://agentsso.pinnaclerealty.ca
 
-Alternative / planned portal domain:
-
-**portal.pinnaclerealty.ca**
-
 ## Project Overview
 
 The Pinnacle Realty Portal is the private dashboard layer of the Pinnacle digital ecosystem.
@@ -182,7 +178,7 @@ Important security expectations:
 | --- | --- | --- |
 | Main Website | pinnaclerealty.ca | Public brokerage website |
 | Join Website | join.pinnaclerealty.ca | Recruitment inquiry funnel |
-| Portal | agentsso.pinnaclerealty.ca / portal.pinnaclerealty.ca | Internal agent and broker dashboard |
+| Portal | agentsso.pinnaclerealty.ca | Internal agent and broker dashboard |
 | Blog | blogs.pinnaclerealty.ca | Content and article platform |
 
 ## Planned / Future Features
